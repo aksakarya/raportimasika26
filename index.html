@@ -1,208 +1,824 @@
-// Ganti dengan ID Spreadsheet kamu (ambil dari URL Google Sheets)
-const SPREADSHEET_ID = SpreadsheetApp.getActiveSpreadsheet().getId();
-
-function doPost(e) {
-  try {
-    const request = JSON.parse(e.postData.contents);
-    const action = request.action;
-    const payload = request.payload;
-
-    let responseData = {};
-
-    switch (action) {
-      case 'login':
-        responseData = handleLogin(payload.username, payload.password);
-        break;
-      case 'getDashboardData':
-        responseData = handleGetDashboardData(payload.userId, payload.role, payload.divisi, payload.bulan);
-        break;
-      case 'savePenilaian':
-        responseData = handleSavePenilaian(payload);
-        break;
-      case 'toggleLock':
-        responseData = handleToggleLock(payload);
-        break;
-      case 'saveFeedback':
-        responseData = handleSaveFeedback(payload);
-        break;
-      default:
-        throw new Error('Aksi tidak valid atau belum diimplementasi.');
-    }
-
-    return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: responseData }))
-      .setMimeType(ContentService.MimeType.JSON);
-
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.message }))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}
-
-function handleLogin(username, password) {
-  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName('Users');
-  const data = sheet.getDataRange().getValues();
-  
-  for (let i = 1; i < data.length; i++) {
-    const [userId, dbUser, dbPassHash, nama, divisi, role] = data[i];
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Penilaian Staf Himpunan</title>
     
-    // Normalisasi data: ubah ke format string dan hapus spasi berlebih
-    const cleanDbUser = String(dbUser || '').trim();
-    const cleanDbPass = String(dbPassHash || '').trim();
-    const cleanInputUser = String(username || '').trim();
-    const cleanInputPass = String(password || '').trim();
-
-    const hashedInput = computeHash(cleanInputPass);
+    <!-- Google Fonts: Inter & Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
     
-    // Pengecekan mendukung teks biasa (plain text) untuk testing
-    if (cleanDbUser === cleanInputUser && (cleanDbPass === hashedInput || cleanDbPass === cleanInputPass)) {
-      return { userId, nama, divisi, role };
-    }
-  }
-  throw new Error('Username atau password salah.');
-}
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        himpPrimary: '#023E5A', // Biru Gelap
+                        himpLight: '#0077B6',   // Biru Terang
+                        himpAccent: '#FEC00F',  // Kuning Emas Aksa
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        poppins: ['Poppins', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
 
-function handleGetDashboardData(userId, role, divisi, bulan) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const result = {};
+    <style>
+        /* Animasi Latar Belakang Gradasi Dinamis yang Lembut */
+        .bg-animated-gradient {
+            background: linear-gradient(135deg, #001524, #023E5A, #0077B6, #023E5A);
+            background-size: 300% 300%;
+            animation: gradientShift 12s ease-in-out infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
-  const safeStr = (val) => String(val || '').trim();
-  const targetBulan = safeStr(bulan);
-  const targetUserId = safeStr(userId);
-  const targetDivisi = safeStr(divisi);
+        /* Glassmorphism khusus untuk Login Card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+        }
 
-  if (role === 'Staf') {
-    const logSheet = ss.getSheetByName('Penilaian_Staf');
-    if (!logSheet) return { myScores: [] };
-    
-    const logs = logSheet.getDataRange().getValues();
-    // Filter kebal tipe data (ubah semua jadi string)
-    result.myScores = logs.filter(row => safeStr(row[1]) === targetBulan && safeStr(row[2]) === targetUserId);
-    
-    const feedbackSheet = ss.getSheetByName('Feedback_BPH');
-    if (feedbackSheet) {
-      const feedbacks = feedbackSheet.getDataRange().getValues();
-      result.feedback = feedbacks.find(row => safeStr(row[1]) === targetBulan && safeStr(row[2]) === targetDivisi);
-    }
-  } 
-  else if (role === 'Kadiv') {
-    const usersSheet = ss.getSheetByName('Users');
-    const usersData = usersSheet.getDataRange().getValues();
-    result.staffList = usersData.filter(row => safeStr(row[4]) === targetDivisi && safeStr(row[5]) === 'Staf');
-    
-    const configSheet = ss.getSheetByName('Divisi_Config');
-    if(configSheet) {
-      const configData = configSheet.getDataRange().getValues();
-      result.config = configData.find(row => safeStr(row[1]) === targetBulan && safeStr(row[2]) === targetDivisi);
-    }
+        /* Menghilangkan panah atas-bawah (spinners) pada input angka Kadiv */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; margin: 0; 
+        }
+        
+        body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
+    </style>
+</head>
+<body class="font-sans text-slate-800 bg-slate-50 antialiased selection:bg-himpAccent selection:text-slate-900">
 
-    const logSheet = ss.getSheetByName('Penilaian_Staf');
-    if(logSheet) {
-      const logs = logSheet.getDataRange().getValues();
-      const staffIds = result.staffList.map(s => safeStr(s[0])); 
-      result.scoreList = logs.filter(row => safeStr(row[1]) === targetBulan && staffIds.includes(safeStr(row[2])));
-    }
-  }
-  else if (role === 'Admin') {
-    const logSheet = ss.getSheetByName('Penilaian_Staf');
-    if(logSheet) result.allScores = logSheet.getDataRange().getValues(); 
+    <div id="app" class="flex-grow flex flex-col relative w-full min-h-screen">
+        
+        <!-- LOGIN VIEW -->
+        <div id="login-view" class="fixed inset-0 z-50 flex items-center justify-center bg-animated-gradient">
+            
+            <!-- Navbar Minimalis -->
+            <nav class="absolute top-0 w-full px-6 py-6 md:px-12 flex justify-between items-center z-20">
+                <img src="https://iili.io/njVxuea.png" alt="Logo Himpunan" class="h-10 md:h-12 object-contain drop-shadow-md">
+                
+                <div class="hidden md:flex gap-8 items-center text-white/90 text-sm font-medium tracking-wide">
+                    <a href="#" class="hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] transition-all">Home</a>
+                    <a href="#" class="hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] transition-all">About</a>
+                    <a href="#" class="hover:text-white hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] transition-all">Contact</a>
+                    <button class="border border-white/50 px-6 py-2 rounded-full hover:bg-white hover:text-himpPrimary font-semibold transition-all duration-300">Login</button>
+                </div>
+            </nav>
 
-    const configSheet = ss.getSheetByName('Divisi_Config');
-    if(configSheet) result.allConfigs = configSheet.getDataRange().getValues();
+            <!-- Login Card (Glassmorphism) -->
+            <div class="glass-card rounded-3xl w-full max-w-md p-8 sm:p-10 relative mx-4 mt-8">
+                
+                <!-- Tombol Close (X) -->
+                <button class="absolute top-6 right-6 text-white/50 hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+                
+                <!-- Judul -->
+                <div class="mb-10 mt-2">
+                    <h2 class="text-3xl font-extrabold font-poppins bg-clip-text text-transparent bg-gradient-to-r from-[#FEC00F] to-[#FFE066] drop-shadow-sm">Welcome, Sobat Aksa!</h2>
+                </div>
+                
+                <!-- Form Input -->
+                <div class="space-y-7">
+                    
+                    <!-- Input Email / Username -->
+                    <div class="relative group">
+                        <label class="block text-[11px] font-semibold text-white/70 uppercase tracking-widest mb-1">Email / Username</label>
+                        <div class="flex items-center border-b border-white/40 group-focus-within:border-himpAccent transition-colors duration-300 py-1">
+                            <input type="text" id="username" placeholder="Masukkan email atau username" 
+                                class="w-full bg-transparent border-none text-white outline-none placeholder-white/30 text-sm font-medium">
+                            <!-- Ikon Amplop -->
+                            <svg class="w-5 h-5 text-white/50 ml-2 group-focus-within:text-himpAccent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Input Password -->
+                    <div class="relative group">
+                        <label class="block text-[11px] font-semibold text-white/70 uppercase tracking-widest mb-1">Password</label>
+                        <div class="flex items-center border-b border-white/40 group-focus-within:border-himpAccent transition-colors duration-300 py-1">
+                            <input type="password" id="password" placeholder="Masukkan password" 
+                                class="w-full bg-transparent border-none text-white outline-none placeholder-white/30 text-sm font-medium">
+                            <!-- Ikon Gembok -->
+                            <svg class="w-5 h-5 text-white/50 ml-2 group-focus-within:text-himpAccent transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Opsi Tambahan -->
+                    <div class="flex justify-between items-center text-[12px] text-white/70 pt-1">
+                        <label class="flex items-center gap-2 cursor-pointer hover:text-white transition-colors group">
+                            <div class="relative flex items-center justify-center w-4 h-4 border border-white/40 rounded-sm group-hover:border-white transition-colors">
+                                <input type="checkbox" class="absolute opacity-0 cursor-pointer w-full h-full checked:opacity-100">
+                                <!-- Custom Checkmark (hidden default) -->
+                                <svg class="w-3 h-3 text-himpAccent hidden pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <span class="font-medium tracking-wide">Remember me</span>
+                        </label>
+                        <a href="#" class="hover:text-himpAccent transition-colors font-medium tracking-wide">Forgot Password?</a>
+                    </div>
 
-    const feedbackSheet = ss.getSheetByName('Feedback_BPH');
-    if (feedbackSheet) result.allFeedback = feedbackSheet.getDataRange().getValues();
-  }
+                    <!-- Tombol Login -->
+                    <button id="btn-login" onclick="login()" 
+                        class="w-full bg-himpPrimary hover:bg-[#012b3f] text-white font-bold py-3.5 px-4 rounded-xl shadow-lg transition-all duration-300 mt-4 border border-white/10 tracking-wide flex justify-center items-center h-[52px]">
+                        <span>Login</span>
+                    </button>
+                </div>
+            </div>
+        </div>
 
-  return result;
-}
+        <!-- DASHBOARD VIEW (Hidden initially) -->
+        <div id="dashboard-view" class="hidden flex-grow flex flex-col bg-slate-50 min-h-screen">
+            <!-- Header (Navbar) -->
+            <header class="bg-himpPrimary text-white shadow-md sticky top-0 z-10">
+                <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <img src="https://iili.io/njVxuea.png" alt="Logo" class="h-8 object-contain hidden sm:block brightness-0 invert">
+                        <div class="h-8 w-px bg-white/20 hidden sm:block"></div>
+                        <div>
+                            <h2 id="user-fullname" class="text-base font-bold leading-tight tracking-wide">Nama Pengguna</h2>
+                            <p id="user-role-divisi" class="text-xs text-himpAccent font-semibold tracking-widest uppercase">Role - Divisi</p>
+                        </div>
+                    </div>
+                    <button onclick="logout()" class="bg-white/10 hover:bg-white/20 text-white border border-white/30 text-xs font-semibold uppercase tracking-wider py-2 px-5 rounded-full transition-all">
+                        Logout
+                    </button>
+                </div>
+            </header>
 
-function handleSavePenilaian(payload) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  
-  const safeStr = (val) => String(val || '').trim();
-  const targetBulan = safeStr(payload.bulan);
-  const targetDivisi = safeStr(payload.divisi);
+            <main class="flex-grow w-full max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+                
+                <!-- Filter Bulan -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex-1">
+                        <h1 class="text-xl font-bold font-poppins text-slate-800">Dashboard Penilaian</h1>
+                        <p class="text-sm text-slate-500">Pilih periode penilaian untuk melihat data.</p>
+                    </div>
+                    <div>
+                        <select id="select-bulan" onchange="loadDashboardData()" 
+                            class="block w-full sm:w-56 bg-slate-50 border border-slate-300 text-slate-900 rounded-xl focus:ring-himpPrimary focus:border-himpPrimary p-3 outline-none font-semibold cursor-pointer shadow-sm">
+                            <option value="September 2026">September 2026</option>
+                            <option value="Oktober 2026">Oktober 2026</option>
+                            <option value="November 2026">November 2026</option>
+                            <option value="Desember 2026">Desember 2026</option>
+                        </select>
+                    </div>
+                </div>
 
-  // Cek apakah bulan ini sudah dikunci (Locked)
-  const configSheet = ss.getSheetByName('Divisi_Config');
-  let configData = configSheet.getDataRange().getValues();
-  let configIndex = configData.findIndex(row => safeStr(row[1]) === targetBulan && safeStr(row[2]) === targetDivisi);
-  if (configIndex > 0) {
-    configSheet.getRange(configIndex + 1, 4).setValue(payload.totalRapat);
-    configSheet.getRange(configIndex + 1, 5).setValue(payload.totalProker);
-  } else {
-    configSheet.appendRow([`C-${targetBulan}-${targetDivisi}`, payload.bulan, payload.divisi, payload.totalRapat, payload.totalProker, false]);
-  }
+                <!-- STAF CONTENT -->
+                <div id="staf-content" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50/50 px-8 py-5 border-b border-slate-100">
+                            <h3 class="text-lg font-bold font-poppins text-slate-800">Rapor Kinerja Bulanan</h3>
+                        </div>
+                        <div id="staf-scores-container" class="p-8">
+                            <!-- Injected via JS -->
+                            Memuat data...
+                        </div>
+                    </div>
+                    <div id="staf-feedback-container" class="empty:hidden"></div>
+                </div>
 
-  // Simpan Nilai Staf
-  const logSheet = ss.getSheetByName('Penilaian_Staf');
-  const data = logSheet.getDataRange().getValues();
-  let savedCount = 0;
-  
-  payload.scores.forEach(scoreData => {
-    const targetUserId = safeStr(scoreData.userId);
-    const existingRowIndex = data.findIndex(row => safeStr(row[1]) === targetBulan && safeStr(row[2]) === targetUserId);
-    const rowData = [
-      `L-${payload.bulan}-${scoreData.userId}`, payload.bulan, scoreData.userId, 
-      scoreData.hadirRapat, scoreData.lateRapat, 
-      scoreData.hadirProker, scoreData.lateProker, 
-      scoreData.teamwork, scoreData.komunikasi, 
-      scoreData.inisiatif, scoreData.keaktifan,
-      scoreData.totalNilai, scoreData.predikat, scoreData.namaStaf, payload.divisi
-    ];
+                <!-- KADIV CONTENT -->
+                <div id="kadiv-content" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50/50 px-8 py-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <h3 class="text-lg font-bold font-poppins text-slate-800">Form Penilaian Divisi</h3>
+                            <span id="lock-status-badge" class="px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest shadow-sm">Status: -</span>
+                        </div>
+                        
+                        <div class="p-8">
+                            <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-6 mb-8">
+                                <h4 class="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Konfigurasi Kegiatan (Bulan Ini)</h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div class="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-blue-100 shadow-sm">
+                                        <label class="text-sm font-medium text-slate-600">Total Rapat Divisi</label>
+                                        <input type="number" id="config-rapat" value="0" min="0" onchange="recalculateAll()"
+                                            class="w-20 px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-himpPrimary outline-none text-center font-bold">
+                                    </div>
+                                    <div class="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-blue-100 shadow-sm">
+                                        <label class="text-sm font-medium text-slate-600">Total Proker Divisi</label>
+                                        <input type="number" id="config-proker" value="0" min="0" onchange="recalculateAll()"
+                                            class="w-20 px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-himpPrimary outline-none text-center font-bold">
+                                    </div>
+                                </div>
+                            </div>
 
-    if (existingRowIndex > 0) {
-      logSheet.getRange(existingRowIndex + 1, 1, 1, rowData.length).setValues([rowData]);
-    } else {
-      logSheet.appendRow(rowData);
-    }
-    savedCount++;
-  });
+                            <div id="kadiv-table-container" class="border border-slate-200 rounded-2xl overflow-x-auto shadow-sm">
+                                Memuat form penilaian...
+                            </div>
+                            
+                            <div class="mt-8 flex justify-end">
+                                <button onclick="saveKadivPenilaian()" id="btn-save-kadiv" 
+                                    class="bg-himpPrimary hover:bg-opacity-90 text-white font-bold py-3.5 px-10 rounded-xl shadow-lg transition-all w-full sm:w-auto tracking-wide">
+                                    Simpan Penilaian
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-  return { message: `Berhasil menyimpan data ${savedCount} staf.` };
-}
+                <!-- ADMIN CONTENT -->
+                <div id="admin-content" class="hidden space-y-6">
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50/50 px-8 py-5 border-b border-slate-100">
+                            <h3 class="text-lg font-bold font-poppins text-slate-800">Panel Evaluasi BPH</h3>
+                        </div>
+                        <div class="p-8">
+                            <div class="flex flex-col md:flex-row md:items-end gap-6 mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                <div class="flex-1">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Filter Data Divisi</label>
+                                    <select id="admin-select-divisi" onchange="filterAdminTable()" 
+                                        class="w-full bg-white border border-slate-300 text-slate-900 rounded-xl focus:ring-himpPrimary p-3 outline-none font-semibold shadow-sm cursor-pointer">
+                                        <option value="Semua">Tampilkan Semua Divisi</option>
+                                        <option value="Medbrand">Medbrand</option>
+                                        <option value="PSDM">PSDM</option>
+                                        <option value="Humas">Humas</option>
+                                    </select>
+                                </div>
+                                <div id="admin-action-controls" class="flex-none">
+                                    <!-- Tombol Lock/Unlock -->
+                                </div>
+                            </div>
 
-function handleToggleLock(payload) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const configSheet = ss.getSheetByName('Divisi_Config');
-  const data = configSheet.getDataRange().getValues();
-  
-  const rowIndex = data.findIndex(row => row[1] === payload.bulan && row[2] === payload.divisi);
-  
-  if (rowIndex > 0) {
-    configSheet.getRange(rowIndex + 1, 6).setValue(payload.isLocked);
-    return { message: `Status kuncian Divisi ${payload.divisi} berhasil diperbarui.` };
-  } else {
-    // Buat config baru jika belum ada
-    configSheet.appendRow([`C-${payload.bulan}-${payload.divisi}`, payload.bulan, payload.divisi, 0, 0, payload.isLocked]);
-    return { message: `Dibuat dan status kuncian diperbarui.` };
-  }
-}
+                            <div id="admin-feedback-section" class="hidden mb-8 bg-yellow-50/50 border border-yellow-200 rounded-2xl p-6 shadow-sm">
+                                <h4 class="text-sm font-bold font-poppins text-slate-800 mb-3">Evaluasi & Feedback untuk Divisi</h4>
+                                <textarea id="admin-feedback-text" rows="3" placeholder="Tuliskan catatan apresiasi atau evaluasi dari BPH..." 
+                                    class="w-full p-4 rounded-xl border border-slate-300 focus:ring-2 focus:ring-himpAccent outline-none transition-all text-sm resize-none"></textarea>
+                                <div class="mt-4 flex justify-end">
+                                    <button onclick="saveAdminFeedback()" 
+                                        class="bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold py-2.5 px-6 rounded-xl transition-all shadow-md">
+                                        Kirim Feedback
+                                    </button>
+                                </div>
+                            </div>
 
-function handleSaveFeedback(payload) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  let feedbackSheet = ss.getSheetByName('Feedback_BPH');
-  
-  if (!feedbackSheet) {
-    feedbackSheet = ss.insertSheet('Feedback_BPH');
-    feedbackSheet.appendRow(['FeedbackID', 'Bulan', 'Divisi', 'UserID_BPH', 'CatatanFeedback']);
-  }
+                            <div id="admin-table-container" class="border border-slate-200 rounded-2xl overflow-x-auto shadow-sm">
+                                Memuat data rekapitulasi...
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-  const data = feedbackSheet.getDataRange().getValues();
-  const rowIndex = data.findIndex(row => row[1] === payload.bulan && row[2] === payload.divisi);
-  
-  const rowData = [`FB-${payload.bulan}-${payload.divisi}`, payload.bulan, payload.divisi, payload.adminId, payload.catatan];
+            </main>
+        </div>
+    </div>
 
-  if (rowIndex > 0) {
-    feedbackSheet.getRange(rowIndex + 1, 1, 1, rowData.length).setValues([rowData]);
-  } else {
-    feedbackSheet.appendRow(rowData);
-  }
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-6 right-6 max-w-sm w-full bg-slate-900 text-white px-5 py-4 rounded-2xl shadow-2xl flex items-center gap-4 transform translate-y-24 opacity-0 transition-all duration-300 z-50 pointer-events-none">
+        <div id="toast-icon" class="flex-shrink-0"></div>
+        <div id="toast-msg" class="text-sm font-medium tracking-wide">Notifikasi</div>
+    </div>
 
-  return { message: 'Feedback berhasil disimpan.' };
-}
+    <script>
+        // MASUKAN URL WEB APP GOOGLE APPS SCRIPT-MU DI SINI
+        const API_URL = 'https://script.google.com/macros/s/AKfycbw9Qg82kfR4hLIRJVq0L394gcTDRu0rOO7JNg-Ky7Rk2IfdT9e5oCQRyve0MSaIAiyghQ/exec';
+        
+        let currentUser = null;
+        let currentStaffList = [];
+        let isCurrentMonthLocked = false;
+        
+        let adminAllScores = [];
+        let adminAllConfigs = [];
+        let adminAllFeedbacks = [];
 
-function computeHash(input) {
-  const rawHash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, input, Utilities.Charset.UTF_8);
-  return rawHash.map(byte => (byte < 0 ? byte + 256 : byte).toString(16).padStart(2, '0')).join('');
-}
+        // Handle Custom Checkbox Logic
+        document.querySelector('input[type="checkbox"]').addEventListener('change', function(e) {
+            const svg = this.nextElementSibling;
+            if (e.target.checked) svg.classList.remove('hidden');
+            else svg.classList.add('hidden');
+        });
+
+        async function fetchAPI(action, payload) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action, payload })
+                });
+                const text = await response.text();
+                const json = JSON.parse(text);
+                
+                if (json.status === 'error') throw new Error(json.message);
+                return json.data;
+            } catch (error) {
+                showToast(error.message || 'Terjadi kesalahan jaringan.', 'error');
+                throw error;
+            }
+        }
+
+        async function login() {
+            const userIn = document.getElementById('username').value;
+            const passIn = document.getElementById('password').value;
+            const btn = document.getElementById('btn-login');
+
+            if (!userIn || !passIn) return showToast('Harap isi email/username dan password.', 'error');
+
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+
+            try {
+                const userData = await fetchAPI('login', { username: userIn, password: passIn });
+                currentUser = userData;
+                
+                // Animasi fade out login
+                const loginView = document.getElementById('login-view');
+                loginView.style.opacity = '0';
+                loginView.style.transition = 'opacity 0.5s ease';
+                
+                setTimeout(() => {
+                    loginView.classList.add('hidden');
+                    loginView.style.opacity = '1'; // reset
+                    document.getElementById('dashboard-view').classList.remove('hidden');
+                    
+                    document.getElementById('user-fullname').innerText = currentUser.nama;
+                    document.getElementById('user-role-divisi').innerText = `${currentUser.role} | Divisi ${currentUser.divisi}`;
+                    
+                    loadDashboardData();
+                }, 500);
+
+            } catch (error) {
+                btn.disabled = false;
+                btn.innerHTML = '<span>Login</span>';
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+            
+            ['staf-content', 'kadiv-content', 'admin-content'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById('btn-login').innerHTML = '<span>Login</span>';
+            document.getElementById('btn-login').disabled = false;
+        }
+
+        async function loadDashboardData() {
+            const bulan = document.getElementById('select-bulan').value;
+            
+            ['staf-content', 'kadiv-content', 'admin-content'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+
+            try {
+                const data = await fetchAPI('getDashboardData', {
+                    userId: currentUser.userId,
+                    role: currentUser.role,
+                    divisi: currentUser.divisi,
+                    bulan: bulan
+                });
+
+                if (currentUser.role === 'Staf') {
+                    document.getElementById('staf-content').classList.remove('hidden');
+                    renderStafScores(data.myScores, data.feedback);
+                } else if (currentUser.role === 'Kadiv') {
+                    document.getElementById('kadiv-content').classList.remove('hidden');
+                    renderKadivForm(data);
+                } else if (currentUser.role === 'Admin') {
+                    document.getElementById('admin-content').classList.remove('hidden');
+                    adminAllScores = data.allScores || [];
+                    adminAllConfigs = data.allConfigs || [];
+                    adminAllFeedbacks = data.allFeedback || [];
+                    filterAdminTable();
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function calculateGrades(hadirR, lateR, hadirP, lateP, team, kom, init, aktif) {
+            const totRapat = parseInt(document.getElementById('config-rapat').value) || 0;
+            const totProker = parseInt(document.getElementById('config-proker').value) || 0;
+
+            let skorRapat = 0;
+            let skorProker = 0;
+
+            if (totRapat > 0) skorRapat = ((hadirR / totRapat) * 25) - (lateR * 5);
+            if (totProker > 0) skorProker = ((hadirP / totProker) * 35) - (lateP * 10);
+            
+            let nilaiKuantitatif = skorRapat + skorProker;
+            if (nilaiKuantitatif < 0) nilaiKuantitatif = 0;
+
+            const nilaiKualitatif = (team * 0.1) + (kom * 0.1) + (init * 0.1) + (aktif * 0.1);
+            
+            const rataKualitatif = (Number(team) + Number(kom) + Number(init) + Number(aktif)) / 4;
+            let predikat = "Tidak Tertolong";
+            if (rataKualitatif >= 86) predikat = "Melebihi Harapan";
+            else if (rataKualitatif >= 71) predikat = "Sesuai Harapan";
+            else if (rataKualitatif >= 56) predikat = "Mendekati Harapan";
+            else if (rataKualitatif >= 41) predikat = "Perlu Ditingkatkan";
+            else if (rataKualitatif >= 26) predikat = "Perlu Perlakuan Khusus";
+
+            const totalAkhir = (nilaiKuantitatif + nilaiKualitatif).toFixed(2);
+            return { totalAkhir, predikat };
+        }
+
+        function renderKadivForm(data) {
+            currentStaffList = data.staffList;
+            isCurrentMonthLocked = false;
+            
+            if (data.config) {
+                document.getElementById('config-rapat').value = data.config[3] || 0;
+                document.getElementById('config-proker').value = data.config[4] || 0;
+                isCurrentMonthLocked = data.config[5] === true;
+            } else {
+                document.getElementById('config-rapat').value = 0;
+                document.getElementById('config-proker').value = 0;
+            }
+
+            const badge = document.getElementById('lock-status-badge');
+            const btnSave = document.getElementById('btn-save-kadiv');
+            
+            if (isCurrentMonthLocked) {
+                badge.innerText = "Terkunci (Final)";
+                badge.className = "px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest shadow-sm bg-red-100 text-red-800 border border-red-200";
+                btnSave.disabled = true;
+                btnSave.innerText = "Penilaian Dikunci BPH";
+                btnSave.classList.replace('bg-himpPrimary', 'bg-slate-400');
+                btnSave.classList.replace('hover:bg-opacity-90', 'cursor-not-allowed');
+                document.getElementById('config-rapat').disabled = true;
+                document.getElementById('config-proker').disabled = true;
+            } else {
+                badge.innerText = "Terbuka (Draft)";
+                badge.className = "px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-widest shadow-sm bg-green-100 text-green-800 border border-green-200";
+                btnSave.disabled = false;
+                btnSave.innerText = "Simpan Penilaian";
+                btnSave.classList.replace('bg-slate-400', 'bg-himpPrimary');
+                btnSave.classList.replace('cursor-not-allowed', 'hover:bg-opacity-90');
+                document.getElementById('config-rapat').disabled = false;
+                document.getElementById('config-proker').disabled = false;
+            }
+
+            let html = `<table class="w-full text-sm text-left">
+                <thead class="text-[11px] uppercase bg-slate-100/80 text-slate-500 border-b border-slate-200 tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4 font-bold min-w-[180px]">Nama Staf</th>
+                        <th class="px-2 py-4 font-bold text-center" title="Hadir Rapat">H(R)</th>
+                        <th class="px-2 py-4 font-bold text-center" title="Telat Rapat">T(R)</th>
+                        <th class="px-2 py-4 font-bold text-center" title="Hadir Proker">H(P)</th>
+                        <th class="px-2 py-4 font-bold text-center" title="Telat Proker">T(P)</th>
+                        <th class="px-2 py-4 font-bold text-center" title="Teamwork">TW</th>
+                        <th class="px-2 py-4 font-bold text-center" title="Komunikasi">KOM</th>
+                        <th class="px-2 py-4 font-bold text-center" title="Inisiatif">INI</th>
+                        <th class="px-2 py-4 font-bold text-center" title="Keaktifan">AKT</th>
+                        <th class="px-6 py-4 font-bold text-center bg-slate-100">Total</th>
+                        <th class="px-6 py-4 font-bold">Predikat</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">`;
+
+            const inputClass = isCurrentMonthLocked 
+                ? "w-14 px-1 py-1.5 bg-slate-100 border-transparent text-slate-400 rounded-lg text-center cursor-not-allowed font-medium" 
+                : "w-14 px-1 py-1.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-himpPrimary outline-none text-center transition-all calc-trigger font-medium bg-white hover:border-slate-400 focus:border-himpPrimary shadow-sm";
+
+            currentStaffList.forEach(staf => {
+                const staffId = staf[0];
+                const nama = staf[3];
+                const existingScore = data.scoreList ? data.scoreList.find(row => row[2] == staffId) : null;
+                const v = existingScore || [0,0,0, 0,0,0,0, 0,0,0,0, "0.00", "-"];
+                const dsbl = isCurrentMonthLocked ? "disabled" : "";
+
+                html += `
+                <tr id="row-${staffId}" data-nama="${nama}" class="hover:bg-slate-50/80 transition-colors group">
+                    <td class="px-6 py-4 font-semibold text-slate-800">${nama}</td>
+                    <td class="px-2 py-4"><input type="number" ${dsbl} class="${inputClass}" id="hr-${staffId}" min="0" value="${v[3]}"></td>
+                    <td class="px-2 py-4"><input type="number" ${dsbl} class="${inputClass}" id="tr-${staffId}" min="0" value="${v[4]}"></td>
+                    <td class="px-2 py-4"><input type="number" ${dsbl} class="${inputClass}" id="hp-${staffId}" min="0" value="${v[5]}"></td>
+                    <td class="px-2 py-4"><input type="number" ${dsbl} class="${inputClass}" id="tp-${staffId}" min="0" value="${v[6]}"></td>
+                    
+                    <td class="px-2 py-4"><input type="number" ${dsbl} class="${inputClass}" id="team-${staffId}" min="0" max="100" value="${v[7]}"></td>
+                    <td class="px-2 py-4"><input type="number" ${dsbl} class="${inputClass}" id="kom-${staffId}" min="0" max="100" value="${v[8]}"></td>
+                    <td class="px-2 py-4"><input type="number" ${dsbl} class="${inputClass}" id="init-${staffId}" min="0" max="100" value="${v[9]}"></td>
+                    <td class="px-2 py-4"><input type="number" ${dsbl} class="${inputClass}" id="aktif-${staffId}" min="0" max="100" value="${v[10]}"></td>
+                    
+                    <td class="px-6 py-4 text-center bg-slate-50 group-hover:bg-slate-100 transition-colors"><strong class="text-himpPrimary text-lg" id="tot-${staffId}">${v[11] || 0}</strong></td>
+                    <td class="px-6 py-4 text-xs font-bold"><span id="pred-${staffId}" class="px-3 py-1 rounded-md bg-slate-100 text-slate-600 border border-slate-200">${v[12] || "-"}</span></td>
+                </tr>`;
+            });
+            html += `</tbody></table>`;
+            document.getElementById('kadiv-table-container').innerHTML = html;
+
+            if (!isCurrentMonthLocked) {
+                document.querySelectorAll('.calc-trigger').forEach(input => {
+                    input.addEventListener('input', recalculateAll);
+                });
+                recalculateAll();
+            }
+        }
+
+        function recalculateAll() {
+            if(isCurrentMonthLocked) return;
+            currentStaffList.forEach(staf => {
+                const id = staf[0];
+                const hr = parseInt(document.getElementById(`hr-${id}`).value) || 0;
+                const tr = parseInt(document.getElementById(`tr-${id}`).value) || 0;
+                const hp = parseInt(document.getElementById(`hp-${id}`).value) || 0;
+                const tp = parseInt(document.getElementById(`tp-${id}`).value) || 0;
+                
+                const team = parseInt(document.getElementById(`team-${id}`).value) || 0;
+                const kom = parseInt(document.getElementById(`kom-${id}`).value) || 0;
+                const init = parseInt(document.getElementById(`init-${id}`).value) || 0;
+                const aktif = parseInt(document.getElementById(`aktif-${id}`).value) || 0;
+
+                const hasil = calculateGrades(hr, tr, hp, tp, team, kom, init, aktif);
+                
+                document.getElementById(`tot-${id}`).innerText = hasil.totalAkhir;
+                
+                const predEl = document.getElementById(`pred-${id}`);
+                predEl.innerText = hasil.predikat;
+                
+                // Warnai badge predikat secara dinamis
+                let predClass = "px-3 py-1 rounded-md border text-xs font-bold ";
+                if(hasil.predikat === "Melebihi Harapan") predEl.className = predClass + "bg-green-50 text-green-700 border-green-200";
+                else if(hasil.predikat === "Sesuai Harapan") predEl.className = predClass + "bg-blue-50 text-blue-700 border-blue-200";
+                else if(hasil.predikat === "Mendekati Harapan") predEl.className = predClass + "bg-yellow-50 text-yellow-700 border-yellow-200";
+                else if(hasil.predikat === "Perlu Ditingkatkan" || hasil.predikat === "Perlu Perlakuan Khusus") predEl.className = predClass + "bg-orange-50 text-orange-700 border-orange-200";
+                else predEl.className = predClass + "bg-red-50 text-red-700 border-red-200";
+            });
+        }
+
+        async function saveKadivPenilaian() {
+            if(isCurrentMonthLocked) return;
+            
+            const btn = document.getElementById('btn-save-kadiv');
+            btn.disabled = true;
+            btn.innerText = 'Menyimpan...';
+            
+            const payload = {
+                bulan: document.getElementById('select-bulan').value,
+                divisi: currentUser.divisi,
+                totalRapat: parseInt(document.getElementById('config-rapat').value) || 0,
+                totalProker: parseInt(document.getElementById('config-proker').value) || 0,
+                scores: []
+            };
+
+            currentStaffList.forEach(staf => {
+                const id = staf[0];
+                const trElement = document.getElementById(`row-${id}`);
+                payload.scores.push({
+                    userId: id,
+                    namaStaf: trElement.dataset.nama,
+                    hadirRapat: parseInt(document.getElementById(`hr-${id}`).value) || 0,
+                    lateRapat: parseInt(document.getElementById(`tr-${id}`).value) || 0,
+                    hadirProker: parseInt(document.getElementById(`hp-${id}`).value) || 0,
+                    lateProker: parseInt(document.getElementById(`tp-${id}`).value) || 0,
+                    teamwork: parseInt(document.getElementById(`team-${id}`).value) || 0,
+                    komunikasi: parseInt(document.getElementById(`kom-${id}`).value) || 0,
+                    inisiatif: parseInt(document.getElementById(`init-${id}`).value) || 0,
+                    keaktifan: parseInt(document.getElementById(`aktif-${id}`).value) || 0,
+                    totalNilai: parseFloat(document.getElementById(`tot-${id}`).innerText) || 0,
+                    predikat: document.getElementById(`pred-${id}`).innerText
+                });
+            });
+
+            try {
+                const res = await fetchAPI('savePenilaian', payload);
+                showToast(res.message, 'success');
+            } catch (err) {
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Simpan Penilaian';
+            }
+        }
+
+        function renderStafScores(data, feedbackData) {
+            const container = document.getElementById('staf-scores-container');
+            const fbContainer = document.getElementById('staf-feedback-container');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <h4 class="text-lg font-bold text-slate-700">Data Kosong</h4>
+                        <p class="mt-1 text-sm text-slate-500">Belum ada data nilai yang dipublikasikan Kadiv untuk bulan ini.</p>
+                    </div>`;
+                fbContainer.innerHTML = '';
+                return;
+            }
+            
+            const v = data[0]; 
+            
+            let predClass = "bg-red-100 text-red-800 border-red-200";
+            if(v[12] === "Melebihi Harapan") predClass = "bg-green-100 text-green-800 border-green-200";
+            else if(v[12] === "Sesuai Harapan") predClass = "bg-blue-100 text-blue-800 border-blue-200";
+            else if(v[12] === "Mendekati Harapan") predClass = "bg-yellow-100 text-yellow-800 border-yellow-200";
+            else if(v[12] === "Perlu Ditingkatkan" || v[12] === "Perlu Perlakuan Khusus") predClass = "bg-orange-100 text-orange-800 border-orange-200";
+
+            container.innerHTML = `
+                <div class="flex flex-col md:flex-row items-center justify-between bg-gradient-to-r from-slate-50 to-blue-50/30 rounded-2xl p-8 border border-slate-200 mb-8 gap-6 shadow-sm">
+                    <div class="text-center md:text-left">
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Total Nilai Akhir</p>
+                        <div class="text-6xl font-black text-himpPrimary drop-shadow-sm">${v[11]}</div>
+                    </div>
+                    <div class="text-center md:text-right">
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Predikat Performa</p>
+                        <span class="px-6 py-2.5 rounded-xl text-sm font-black border shadow-sm ${predClass}">${v[12]}</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="border border-slate-200 rounded-2xl p-6 shadow-sm bg-white relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
+                        <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-5">Kedisiplinan (Kuantitatif)</h4>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center text-sm p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="text-slate-600 font-medium">Kehadiran Rapat Divisi</span>
+                                <span class="font-bold text-slate-900 bg-white px-3 py-1 rounded-lg border border-slate-200">${v[3]} <span class="text-red-500 text-xs font-semibold ml-1">(Telat: ${v[4]})</span></span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="text-slate-600 font-medium">Kehadiran Proker</span>
+                                <span class="font-bold text-slate-900 bg-white px-3 py-1 rounded-lg border border-slate-200">${v[5]} <span class="text-red-500 text-xs font-semibold ml-1">(Telat: ${v[6]})</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-slate-200 rounded-2xl p-6 shadow-sm bg-white relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-himpAccent"></div>
+                        <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-5">Performa (Kualitatif)</h4>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <p class="text-slate-500 text-[11px] font-bold uppercase tracking-wider mb-1">Teamwork</p>
+                                <p class="text-xl font-black text-slate-900">${v[7]}</p>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <p class="text-slate-500 text-[11px] font-bold uppercase tracking-wider mb-1">Komunikasi</p>
+                                <p class="text-xl font-black text-slate-900">${v[8]}</p>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <p class="text-slate-500 text-[11px] font-bold uppercase tracking-wider mb-1">Inisiatif</p>
+                                <p class="text-xl font-black text-slate-900">${v[9]}</p>
+                            </div>
+                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                <p class="text-slate-500 text-[11px] font-bold uppercase tracking-wider mb-1">Keaktifan</p>
+                                <p class="text-xl font-black text-slate-900">${v[10]}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if (feedbackData && feedbackData[4]) {
+                fbContainer.innerHTML = `
+                    <div class="mt-8 bg-yellow-50/80 border border-yellow-200 rounded-2xl p-6 shadow-sm flex gap-4 items-start">
+                        <div class="bg-yellow-100 p-2 rounded-lg text-yellow-600 mt-1">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-yellow-800 uppercase tracking-wider mb-2">Catatan BPH untuk Divisimu</h4>
+                            <p class="text-sm text-yellow-900 italic leading-relaxed">"${feedbackData[4]}"</p>
+                        </div>
+                    </div>`;
+            } else {
+                fbContainer.innerHTML = '';
+            }
+        }
+
+        function filterAdminTable() {
+            const selectedBulan = document.getElementById('select-bulan').value;
+            const selectedDivisi = document.getElementById('admin-select-divisi').value;
+            const container = document.getElementById('admin-table-container');
+            const controlArea = document.getElementById('admin-action-controls');
+            const feedbackArea = document.getElementById('admin-feedback-section');
+
+            if (!adminAllScores || adminAllScores.length <= 1) {
+                container.innerHTML = '<p class="text-sm text-slate-500 py-8 text-center font-medium">Belum ada data penilaian.</p>';
+                controlArea.innerHTML = '';
+                feedbackArea.classList.add('hidden');
+                return;
+            }
+
+            let filteredScores = adminAllScores.slice(1).filter(row => row[1] === selectedBulan);
+            
+            if (selectedDivisi !== "Semua") {
+                filteredScores = filteredScores.filter(row => row[14] === selectedDivisi);
+                
+                const configRow = (adminAllConfigs || []).find(r => r[1] === selectedBulan && r[2] === selectedDivisi);
+                const isLocked = configRow ? configRow[5] === true : false;
+                
+                const btnColor = isLocked ? "bg-red-600 hover:bg-red-700 text-white" : "bg-himpAccent hover:bg-yellow-500 text-slate-900";
+                
+                controlArea.innerHTML = `
+                    <button class="${btnColor} font-bold py-3 px-8 rounded-xl shadow-md transition-all text-sm w-full md:w-auto tracking-wide" onclick="toggleLock('${selectedDivisi}', ${!isLocked})">
+                        ${isLocked ? 'Buka Kuncian Data' : 'Kunci Final Penilaian'}
+                    </button>
+                `;
+
+                const fbRow = (adminAllFeedbacks || []).find(r => r[1] === selectedBulan && r[2] === selectedDivisi);
+                document.getElementById('admin-feedback-text').value = fbRow ? fbRow[4] : '';
+                feedbackArea.classList.remove('hidden');
+            } else {
+                controlArea.innerHTML = '';
+                feedbackArea.classList.add('hidden');
+            }
+
+            if (filteredScores.length === 0) {
+                container.innerHTML = `<p class="text-sm text-slate-500 py-8 text-center font-medium">Belum ada rekap data untuk filter ini.</p>`;
+                return;
+            }
+
+            let html = `<table class="w-full text-sm text-left">
+                <thead class="text-[11px] uppercase bg-slate-100/80 text-slate-500 border-b border-slate-200 tracking-wider">
+                    <tr>
+                        <th class="px-6 py-4 font-bold">Divisi</th>
+                        <th class="px-6 py-4 font-bold">Nama Staf</th>
+                        <th class="px-6 py-4 font-bold text-center">Nilai Akhir</th>
+                        <th class="px-6 py-4 font-bold">Predikat</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">`;
+            
+            filteredScores.forEach(s => {
+                html += `<tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4"><span class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-md text-[11px] font-bold border border-slate-200 uppercase tracking-widest">${s[14] || '-'}</span></td>
+                    <td class="px-6 py-4 font-semibold text-slate-800">${s[13] || s[2]}</td>
+                    <td class="px-6 py-4 text-center font-black text-himpPrimary text-lg">${s[11]}</td>
+                    <td class="px-6 py-4 text-sm font-bold text-slate-600">${s[12]}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        async function toggleLock(divisi, lockStatus) {
+            const bulan = document.getElementById('select-bulan').value;
+            try {
+                const res = await fetchAPI('toggleLock', { bulan, divisi, isLocked: lockStatus, role: currentUser.role });
+                showToast(res.message, 'success');
+                loadDashboardData();
+            } catch (e) {}
+        }
+
+        async function saveAdminFeedback() {
+            const bulan = document.getElementById('select-bulan').value;
+            const divisi = document.getElementById('admin-select-divisi').value;
+            const catatan = document.getElementById('admin-feedback-text').value;
+
+            try {
+                const res = await fetchAPI('saveFeedbackBPH', { bulan, divisi, adminId: currentUser.userId, catatan });
+                showToast(res.message, 'success');
+                loadDashboardData();
+            } catch(e) {}
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            toastMsg.innerText = msg;
+            
+            if (type === 'success') {
+                toast.classList.replace('bg-slate-900', 'bg-green-800');
+                toastIcon.innerHTML = `<svg class="w-6 h-6 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+            } else {
+                toast.classList.replace('bg-slate-900', 'bg-red-800');
+                toastIcon.innerHTML = `<svg class="w-6 h-6 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+            }
+            
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(24px)';
+                
+                // Kembalikan ke warna dasar setelah hilang
+                setTimeout(() => {
+                    toast.classList.replace('bg-green-800', 'bg-slate-900');
+                    toast.classList.replace('bg-red-800', 'bg-slate-900');
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
