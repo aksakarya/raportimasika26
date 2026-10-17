@@ -1,250 +1,251 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Penilaian Staf Himpunan</title>
+<!-- Google Fonts: Inter & Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        himpPrimary: '#023E5A', // Biru Gelap
+                        himpAccent: '#FEC00F',  // Kuning Emas
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        poppins: ['Poppins', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg-color: #f3f4f6;
-            --card-bg: #ffffff;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --border: #e5e7eb;
-            --danger: #ef4444;
-            --success: #10b981;
-            --warning: #f59e0b;
+        /* Animasi Latar Belakang Gradasi Dinamis */
+        .bg-animated-gradient {
+            background: linear-gradient(-45deg, #001A26, #023E5A, #0A6496, #023E5A);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
-        }
-
-        .hidden { display: none !important; }
+        /* Menghilangkan panah atas-bawah (spinners) pada input angka */
+    <div id="app" class="flex-grow flex flex-col relative">
         
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            margin-bottom: 1.5rem;
-        }
+        <!-- LOGIN VIEW -->
+        <div id="login-view" class="fixed inset-0 z-50 flex items-center justify-center bg-animated-gradient">
+            
+            <!-- Navbar Minimalis -->
+            <nav class="absolute top-0 w-full px-6 py-6 sm:px-10 flex justify-between items-center z-20">
+                <img src="https://iili.io/njVxuea.png" alt="Logo Himpunan" class="h-10 sm:h-12 object-contain">
+                <div class="hidden sm:flex gap-8 items-center text-white/90 text-sm font-medium">
+                    <a href="#" class="hover:text-white transition-colors">Home</a>
+                    <a href="#" class="hover:text-white transition-colors">About</a>
+                    <a href="#" class="hover:text-white transition-colors">Contact</a>
+                    <button class="border border-white/70 px-6 py-2 rounded-full hover:bg-white hover:text-himpPrimary transition-all">Login</button>
+                </div>
+            </nav>
 
-        h1, h2, h3, h4 { margin-bottom: 1rem; color: var(--text-main); }
-        p { margin-bottom: 1rem; color: var(--text-muted); }
+            <!-- Login Card (Glassmorphism) -->
+            <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] w-full max-w-md p-8 sm:p-10 relative mx-4">
+                
+                <!-- Tombol Close (X) -->
+                <button class="absolute top-5 right-5 text-white/60 hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+                
+                <!-- Judul -->
+                <div class="mb-10 mt-2">
+                    <h2 class="text-3xl font-extrabold font-poppins bg-clip-text text-transparent bg-gradient-to-r from-himpAccent to-yellow-200">Welcome, Sobat Aksa!</h2>
+                </div>
+                
+                <!-- Form Input -->
+                <div class="space-y-6">
+                    
+                    <!-- Input Email / Username -->
+                    <div class="relative group">
+                        <label class="block text-xs font-medium text-white/70 mb-1 tracking-wide">Email</label>
+                        <div class="flex items-center border-b border-white/30 group-focus-within:border-himpAccent transition-colors duration-300">
+                            <input type="text" id="username" placeholder="Masukkan email atau username" 
+                                class="w-full bg-transparent border-none text-white py-2 outline-none placeholder-white/30 text-sm">
+                            <svg class="w-5 h-5 text-white/60 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Input Password -->
+                    <div class="relative group">
+                        <label class="block text-xs font-medium text-white/70 mb-1 tracking-wide">Password</label>
+                        <div class="flex items-center border-b border-white/30 group-focus-within:border-himpAccent transition-colors duration-300">
+                            <input type="password" id="password" placeholder="Masukkan password" 
+                                class="w-full bg-transparent border-none text-white py-2 outline-none placeholder-white/30 text-sm">
+                            <svg class="w-5 h-5 text-white/60 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    
+                    <!-- Opsi Tambahan -->
+                    <div class="flex justify-between items-center text-xs text-white/70 pt-1">
+                        <label class="flex items-center gap-2 cursor-pointer hover:text-white transition-colors">
+                            <input type="checkbox" class="rounded-sm border-white/30 bg-white/10 text-himpPrimary focus:ring-himpAccent accent-himpAccent">
+                            <span>Remember me</span>
+                        </label>
+                        <a href="#" class="hover:text-himpAccent transition-colors">Forgot Password?</a>
+                    </div>
 
-        .form-group { margin-bottom: 1rem; }
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.2s;
-        }
-        .form-group input:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        button {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.2s;
-            width: 100%;
-        }
-        button:hover { background-color: var(--primary-hover); }
-        button:disabled { background-color: var(--text-muted); cursor: not-allowed; }
-
-        .btn-small { width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; }
-        .btn-danger { background-color: var(--danger); }
-        .btn-danger:hover { background-color: #dc2626; }
-        .btn-warning { background-color: var(--warning); color: #fff;}
-        .btn-warning:hover { background-color: #d97706; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-            overflow-x: auto;
-            display: block;
-        }
-        th, td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-            min-width: 100px;
-        }
-        th { background-color: #f8fafc; font-weight: 600; font-size: 0.9rem; }
-        
-        .score-input { width: 70px; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; }
-        .disabled-input { background-color: #e5e7eb; cursor: not-allowed; }
-
-        .header-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid var(--border);
-        }
-        
-        #toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: var(--text-main);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
-            pointer-events: none;
-            z-index: 1000;
-        }
-        .toast-success { border-left: 5px solid var(--success); }
-        .toast-error { border-left: 5px solid var(--danger); }
-        
-        .badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-        .badge-locked { background-color: #fee2e2; color: #991b1b; }
-        .badge-open { background-color: #d1fae5; color: #065f46; }
-    </style>
-</head>
-<body>
-
-    <div class="container" id="app">
-        <div id="login-view" class="card" style="max-width: 400px; margin: 5rem auto;">
-            <h2>Portal Penilaian Staf</h2>
-            <p>Silakan masuk menggunakan akun himpunan Anda.</p>
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="username" placeholder="Masukkan username">
+                    <!-- Tombol Login -->
+                    <button id="btn-login" onclick="login()" 
+                        class="w-full bg-himpPrimary hover:bg-[#034d70] text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg transition-all duration-300 mt-6 border border-white/10">
+                        Login
+                    </button>
+                </div>
             </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="password" placeholder="Masukkan password">
-            </div>
-            <button id="btn-login" onclick="login()">Masuk</button>
         </div>
 
-        <div id="dashboard-view" class="hidden">
-            <div class="header-bar">
-                <div>
-                    <h2 id="user-fullname">Nama Pengguna</h2>
-                    <p id="user-role-divisi">Role - Divisi</p>
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboard-view" class="hidden flex-grow flex flex-col">
+            <!-- Header (Navbar) -->
+            <header class="bg-himpPrimary text-white shadow-md sticky top-0 z-10">
+                <div class="max-w-6xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                    <div>
+                        <h2 id="user-fullname" class="text-lg font-bold leading-tight">Nama Pengguna</h2>
+                        <p id="user-role-divisi" class="text-sm text-himpAccent font-medium">Role - Divisi</p>
+                    </div>
+                    <button onclick="logout()" class="bg-white/10 hover:bg-white/20 text-white border border-white/30 text-sm py-1.5 px-4 rounded-full transition-all">
+                        Keluar
+                    </button>
                 </div>
-                <button class="btn-small btn-danger" onclick="logout()">Logout</button>
-            </div>
+            </header>
 
-            <div class="form-group" style="max-width: 300px; margin-bottom: 2rem;">
-                <label>Pilih Periode Bulan</label>
-                <select id="select-bulan" onchange="loadDashboardData()">
-                    <option value="September 2026">September 2026</option>
-                    <option value="Oktober 2026">Oktober 2026</option>
-                    <option value="November 2026">November 2026</option>
-                    <option value="Desember 2026">Desember 2026</option>
-                </select>
-            </div>
-
-            <div id="staf-content" class="hidden card">
-                <h3>Hasil Penilaian Anda</h3>
-                <div id="staf-scores-container">Memuat data...</div>
-                <div id="staf-feedback-container" style="margin-top: 2rem; padding: 1rem; background: #fffbeb; border-radius: 8px;"></div>
-            </div>
-
-            <div id="kadiv-content" class="hidden card">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h3>Form Penilaian Staf Divisi</h3>
-                    <span id="lock-status-badge" class="badge badge-open">Status: Dibuka</span>
-                </div>
+            <main class="flex-grow w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
                 
-                <div class="card" style="background-color: #f8fafc; border: 1px solid var(--border); margin-top: 1rem;">
-                    <h4>Konfigurasi Kegiatan Divisi Bulan Ini</h4>
-                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                        <div class="form-group">
-                            <label>Total Rapat Divisi</label>
-                            <input type="number" id="config-rapat" value="0" min="0" onchange="recalculateAll()">
+                <!-- Filter Bulan -->
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Periode Penilaian</label>
+                        <select id="select-bulan" onchange="loadDashboardData()" 
+                            class="block w-full sm:w-64 bg-slate-50 border border-slate-300 text-slate-900 rounded-lg focus:ring-himpPrimary focus:border-himpPrimary p-2.5 outline-none font-medium">
+                            <option value="September 2026">September 2026</option>
+                            <option value="Oktober 2026">Oktober 2026</option>
+                            <option value="November 2026">November 2026</option>
+                            <option value="Desember 2026">Desember 2026</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- STAF CONTENT -->
+                <div id="staf-content" class="hidden space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                            <h3 class="text-lg font-bold text-slate-800">Rapor Kinerja Bulanan</h3>
                         </div>
-                        <div class="form-group">
-                            <label>Total Proker Divisi</label>
-                            <input type="number" id="config-proker" value="0" min="0" onchange="recalculateAll()">
+                        <div id="staf-scores-container" class="p-6">
+                            Memuat data...
+                        </div>
+                    </div>
+                    <div id="staf-feedback-container" class="empty:hidden"></div>
+                </div>
+
+                <!-- KADIV CONTENT -->
+                <div id="kadiv-content" class="hidden space-y-6">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <h3 class="text-lg font-bold text-slate-800">Form Penilaian Divisi</h3>
+                            <span id="lock-status-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Status: -</span>
+                        </div>
+                        
+                        <div class="p-6">
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6">
+                                <h4 class="text-sm font-semibold text-slate-700 mb-3">Konfigurasi Kegiatan Divisi (Bulan Ini)</h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-500 mb-1">Total Rapat Divisi</label>
+                                        <input type="number" id="config-rapat" value="0" min="0" onchange="recalculateAll()"
+                                            class="w-full sm:w-32 px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-himpPrimary outline-none transition-all text-center font-bold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-500 mb-1">Total Proker Divisi</label>
+                                        <input type="number" id="config-proker" value="0" min="0" onchange="recalculateAll()"
+                                            class="w-full sm:w-32 px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-himpPrimary outline-none transition-all text-center font-bold">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="kadiv-table-container" class="table-container border border-slate-200 rounded-xl overflow-x-auto">
+                                Memuat form penilaian...
+                            </div>
+                            
+                            <div class="mt-6 flex justify-end">
+                                <button onclick="saveKadivPenilaian()" id="btn-save-kadiv" 
+                                    class="bg-himpPrimary hover:bg-opacity-90 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition-all w-full sm:w-auto">
+                                    Simpan Penilaian
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="kadiv-table-container">Memuat form penilaian...</div>
-                
-                <button onclick="saveKadivPenilaian()" id="btn-save-kadiv" style="margin-top: 2rem;">Simpan Penilaian</button>
-            </div>
-
-            <div id="admin-content" class="hidden card">
-                <h3>Rekapitulasi & Kendali BPH</h3>
-                
-                <div style="margin-bottom: 2rem;">
-                    <h4>Kontrol Divisi</h4>
-                    <div style="display:flex; gap: 1rem; align-items: flex-end;">
-                        <div class="form-group" style="flex: 1;">
-                            <label>Pilih Divisi</label>
-                            <select id="admin-select-divisi" onchange="filterAdminTable()">
-                                <option value="Semua">Semua Divisi</option>
-                                <option value="Medbrand">Medbrand</option>
-                                <option value="PSDM">PSDM</option>
-                                <option value="Humas">Humas</option>
-                            </select>
+                <!-- ADMIN CONTENT -->
+                <div id="admin-content" class="hidden space-y-6">
+                    
+                    <!-- Kontrol Divisi -->
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                            <h3 class="text-lg font-bold text-slate-800">Panel BPH / Admin</h3>
                         </div>
-                        <div class="form-group" style="flex: 1;" id="admin-action-controls">
-                            <!-- Tombol Kunci/Buka akan muncul di sini jika satu divisi dipilih -->
+                        <div class="p-6">
+                            <div class="flex flex-col md:flex-row md:items-end gap-4 mb-6">
+                                <div class="flex-1">
+                                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pilih Divisi untuk difilter</label>
+                                    <select id="admin-select-divisi" onchange="filterAdminTable()" 
+                                        class="w-full bg-slate-50 border border-slate-300 text-slate-900 rounded-lg focus:ring-himpPrimary focus:border-himpPrimary p-2.5 outline-none font-medium">
+                                        <option value="Semua">Semua Divisi</option>
+                                        <option value="Medbrand">Medbrand</option>
+                                        <option value="PSDM">PSDM</option>
+                                        <option value="Humas">Humas</option>
+                                    </select>
+                                </div>
+                                <div id="admin-action-controls" class="flex-none">
+                                    <!-- Tombol Lock/Unlock -->
+                                </div>
+                            </div>
+
+                            <div id="admin-feedback-section" class="hidden mb-6 bg-himpAccent/10 border border-himpAccent/40 rounded-xl p-5">
+                                <h4 class="text-sm font-bold text-slate-800 mb-2">Evaluasi & Feedback untuk Divisi</h4>
+                                <textarea id="admin-feedback-text" rows="3" placeholder="Tuliskan catatan apresiasi atau evaluasi untuk divisi ini..." 
+                                    class="w-full p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-himpAccent focus:border-himpAccent outline-none transition-all text-sm"></textarea>
+                                <button onclick="saveAdminFeedback()" 
+                                    class="mt-3 bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold py-2 px-4 rounded-lg transition-all">
+                                    Kirim Feedback
+                                </button>
+                            </div>
+
+                            <div id="admin-table-container" class="table-container border border-slate-200 rounded-xl overflow-x-auto">
+                                Memuat data rekapitulasi...
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div id="admin-feedback-section" class="hidden" style="margin-bottom: 2rem; background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
-                    <h4>Catatan / Feedback untuk Divisi</h4>
-                    <textarea id="admin-feedback-text" rows="3" placeholder="Masukkan catatan untuk divisi ini..."></textarea>
-                    <button class="btn-small" style="margin-top: 1rem;" onclick="saveAdminFeedback()">Kirim Feedback</button>
-                </div>
-
-                <div id="admin-table-container">Memuat data rekapitulasi...</div>
-            </div>
+            </main>
         </div>
     </div>
 
     <!-- TOAST NOTIFICATION -->
-    <div id="toast">Notifikasi</div>
+    <div id="toast" class="fixed bottom-5 right-5 max-w-sm w-full bg-slate-800 text-white px-4 py-3 rounded-lg shadow-2xl flex items-center gap-3 transform translate-y-24 opacity-0 transition-all duration-300 z-50">
+        <div id="toast-icon" class="flex-shrink-0"></div>
+        <div id="toast-msg" class="text-sm font-medium">Notifikasi</div>
+    </div>
 
     <script>
         // GANTI INI DENGAN URL WEB APP KAMU
@@ -254,7 +255,6 @@
         let currentStaffList = [];
         let isCurrentMonthLocked = false;
         
-        // Data khusus Admin
         let adminAllScores = [];
         let adminAllConfigs = [];
         let adminAllFeedbacks = [];
@@ -284,7 +284,7 @@
             if (!userIn || !passIn) return showToast('Harap isi username dan password.', 'error');
 
             btn.disabled = true;
-            btn.innerText = 'Memverifikasi...';
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 mx-auto text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
 
             try {
                 const userData = await fetchAPI('login', { username: userIn, password: passIn });
@@ -294,11 +294,11 @@
                 document.getElementById('dashboard-view').classList.remove('hidden');
                 
                 document.getElementById('user-fullname').innerText = currentUser.nama;
-                document.getElementById('user-role-divisi').innerText = `${currentUser.role} - ${currentUser.divisi}`;
+                document.getElementById('user-role-divisi').innerText = `${currentUser.role} | Divisi ${currentUser.divisi}`;
 
                 loadDashboardData();
             } catch (error) {
-                // error ditampilkan di toast oleh fetchAPI
+                // Error shown by showToast in fetchAPI
             } finally {
                 btn.disabled = false;
                 btn.innerText = 'Masuk';
@@ -354,7 +354,6 @@
             const totRapat = parseInt(document.getElementById('config-rapat').value) || 0;
             const totProker = parseInt(document.getElementById('config-proker').value) || 0;
 
-            // Kuantitatif (Kedisiplinan) - Rapat 25%, Proker 35%
             let skorRapat = 0;
             let skorProker = 0;
 
@@ -364,10 +363,8 @@
             let nilaiKuantitatif = skorRapat + skorProker;
             if (nilaiKuantitatif < 0) nilaiKuantitatif = 0;
 
-            // Kualitatif - Masing-masing bobot 10% (Total 40%)
             const nilaiKualitatif = (team * 0.1) + (kom * 0.1) + (init * 0.1) + (aktif * 0.1);
             
-            // Penentuan Predikat berdasarkan rata-rata input (0-100)
             const rataKualitatif = (Number(team) + Number(kom) + Number(init) + Number(aktif)) / 4;
             let predikat = "Tidak Tertolong";
             if (rataKualitatif >= 86) predikat = "Melebihi Harapan";
@@ -398,61 +395,72 @@
             const btnSave = document.getElementById('btn-save-kadiv');
             
             if (isCurrentMonthLocked) {
-                badge.innerText = "Status: Dikunci BPH";
-                badge.className = "badge badge-locked";
+                badge.innerText = "Terkunci (Final)";
+                badge.className = "bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider";
                 btnSave.disabled = true;
-                btnSave.innerText = "Penilaian Dikunci";
+                btnSave.innerText = "Penilaian Dikunci oleh BPH";
+                btnSave.classList.replace('bg-himpPrimary', 'bg-slate-400');
+                btnSave.classList.replace('hover:bg-opacity-90', 'cursor-not-allowed');
                 document.getElementById('config-rapat').disabled = true;
                 document.getElementById('config-proker').disabled = true;
             } else {
-                badge.innerText = "Status: Terbuka";
-                badge.className = "badge badge-open";
+                badge.innerText = "Terbuka (Draft)";
+                badge.className = "bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider";
                 btnSave.disabled = false;
                 btnSave.innerText = "Simpan Penilaian";
+                btnSave.classList.replace('bg-slate-400', 'bg-himpPrimary');
+                btnSave.classList.replace('cursor-not-allowed', 'hover:bg-opacity-90');
                 document.getElementById('config-rapat').disabled = false;
                 document.getElementById('config-proker').disabled = false;
             }
 
-            let html = `<table>
-                <tr>
-                    <th>Nama Staf</th>
-                    <th title="Hadir Rapat">H(R)</th>
-                    <th title="Telat Rapat">T(R)</th>
-                    <th title="Hadir Proker">H(P)</th>
-                    <th title="Telat Proker">T(P)</th>
-                    <th title="Teamwork">TW</th>
-                    <th title="Komunikasi">KOM</th>
-                    <th title="Inisiatif">INI</th>
-                    <th title="Keaktifan">AKT</th>
-                    <th>Total</th>
-                    <th>Predikat</th>
-                </tr>`;
+            let html = `<table class="w-full text-sm text-left">
+                <thead class="text-xs uppercase bg-slate-100 text-slate-600 border-b border-slate-200">
+                    <tr>
+                        <th class="px-4 py-3 font-semibold min-w-[150px]">Nama Staf</th>
+                        <th class="px-2 py-3 font-semibold text-center" title="Hadir Rapat">H(R)</th>
+                        <th class="px-2 py-3 font-semibold text-center" title="Telat Rapat">T(R)</th>
+                        <th class="px-2 py-3 font-semibold text-center" title="Hadir Proker">H(P)</th>
+                        <th class="px-2 py-3 font-semibold text-center" title="Telat Proker">T(P)</th>
+                        <th class="px-2 py-3 font-semibold text-center" title="Teamwork">TW</th>
+                        <th class="px-2 py-3 font-semibold text-center" title="Komunikasi">KOM</th>
+                        <th class="px-2 py-3 font-semibold text-center" title="Inisiatif">INI</th>
+                        <th class="px-2 py-3 font-semibold text-center" title="Keaktifan">AKT</th>
+                        <th class="px-4 py-3 font-semibold text-center">Total</th>
+                        <th class="px-4 py-3 font-semibold">Predikat</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">`;
+
+            const inputClass = isCurrentMonthLocked 
+                ? "w-14 sm:w-16 px-1 py-1.5 bg-slate-100 border-transparent text-slate-500 rounded text-center cursor-not-allowed" 
+                : "w-14 sm:w-16 px-1 py-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-himpPrimary focus:border-himpPrimary outline-none text-center transition-all calc-trigger input-number-no-spinners";
 
             currentStaffList.forEach(staf => {
                 const staffId = staf[0];
                 const nama = staf[3];
                 const existingScore = data.scoreList ? data.scoreList.find(row => row[2] === staffId) : null;
                 const v = existingScore || [0,0,0, 0,0,0,0, 0,0,0,0, "0.00", "-"];
-                const dsbl = isCurrentMonthLocked ? "disabled class='score-input disabled-input'" : "class='score-input calc-trigger'";
+                const dsbl = isCurrentMonthLocked ? "disabled" : "";
 
                 html += `
-                <tr id="row-${staffId}" data-nama="${nama}">
-                    <td style="font-size: 0.9rem;">${nama}</td>
-                    <td><input type="number" ${dsbl} id="hr-${staffId}" min="0" value="${v[3]}"></td>
-                    <td><input type="number" ${dsbl} id="tr-${staffId}" min="0" value="${v[4]}"></td>
-                    <td><input type="number" ${dsbl} id="hp-${staffId}" min="0" value="${v[5]}"></td>
-                    <td><input type="number" ${dsbl} id="tp-${staffId}" min="0" value="${v[6]}"></td>
+                <tr id="row-${staffId}" data-nama="${nama}" class="hover:bg-slate-50 transition-colors">
+                    <td class="px-4 py-3 font-medium text-slate-800">${nama}</td>
+                    <td class="px-2 py-3"><input type="number" ${dsbl} class="${inputClass}" id="hr-${staffId}" min="0" value="${v[3]}"></td>
+                    <td class="px-2 py-3"><input type="number" ${dsbl} class="${inputClass}" id="tr-${staffId}" min="0" value="${v[4]}"></td>
+                    <td class="px-2 py-3"><input type="number" ${dsbl} class="${inputClass}" id="hp-${staffId}" min="0" value="${v[5]}"></td>
+                    <td class="px-2 py-3"><input type="number" ${dsbl} class="${inputClass}" id="tp-${staffId}" min="0" value="${v[6]}"></td>
                     
-                    <td><input type="number" ${dsbl} id="team-${staffId}" min="0" max="100" value="${v[7]}"></td>
-                    <td><input type="number" ${dsbl} id="kom-${staffId}" min="0" max="100" value="${v[8]}"></td>
-                    <td><input type="number" ${dsbl} id="init-${staffId}" min="0" max="100" value="${v[9]}"></td>
-                    <td><input type="number" ${dsbl} id="aktif-${staffId}" min="0" max="100" value="${v[10]}"></td>
+                    <td class="px-2 py-3"><input type="number" ${dsbl} class="${inputClass}" id="team-${staffId}" min="0" max="100" value="${v[7]}"></td>
+                    <td class="px-2 py-3"><input type="number" ${dsbl} class="${inputClass}" id="kom-${staffId}" min="0" max="100" value="${v[8]}"></td>
+                    <td class="px-2 py-3"><input type="number" ${dsbl} class="${inputClass}" id="init-${staffId}" min="0" max="100" value="${v[9]}"></td>
+                    <td class="px-2 py-3"><input type="number" ${dsbl} class="${inputClass}" id="aktif-${staffId}" min="0" max="100" value="${v[10]}"></td>
                     
-                    <td><strong id="tot-${staffId}">${v[11] || 0}</strong></td>
-                    <td style="font-size: 0.85rem;"><span id="pred-${staffId}">${v[12] || "-"}</span></td>
+                    <td class="px-4 py-3 text-center"><strong class="text-himpPrimary text-base" id="tot-${staffId}">${v[11] || 0}</strong></td>
+                    <td class="px-4 py-3 text-xs font-semibold text-slate-600"><span id="pred-${staffId}">${v[12] || "-"}</span></td>
                 </tr>`;
             });
-            html += `</table>`;
+            html += `</tbody></table>`;
             document.getElementById('kadiv-table-container').innerHTML = html;
 
             if (!isCurrentMonthLocked) {
@@ -480,7 +488,17 @@
                 const hasil = calculateGrades(hr, tr, hp, tp, team, kom, init, aktif);
                 
                 document.getElementById(`tot-${id}`).innerText = hasil.totalAkhir;
-                document.getElementById(`pred-${id}`).innerText = hasil.predikat;
+                
+                const predEl = document.getElementById(`pred-${id}`);
+                predEl.innerText = hasil.predikat;
+                
+                // Warnai teks predikat secara dinamis
+                predEl.className = "";
+                if(hasil.predikat === "Melebihi Harapan") predEl.classList.add("text-green-600");
+                else if(hasil.predikat === "Sesuai Harapan") predEl.classList.add("text-blue-600");
+                else if(hasil.predikat === "Mendekati Harapan") predEl.classList.add("text-yellow-600");
+                else if(hasil.predikat === "Perlu Ditingkatkan" || hasil.predikat === "Perlu Perlakuan Khusus") predEl.classList.add("text-orange-600");
+                else predEl.classList.add("text-red-600");
             });
         }
 
@@ -533,33 +551,88 @@
             const fbContainer = document.getElementById('staf-feedback-container');
             
             if (!data || data.length === 0) {
-                container.innerHTML = '<p>Belum ada nilai yang diinput oleh Kadiv untuk bulan ini.</p>';
+                container.innerHTML = `
+                    <div class="text-center py-8">
+                        <svg class="mx-auto h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p class="mt-4 text-sm text-slate-500 font-medium">Belum ada data nilai yang dipublikasikan Kadiv untuk bulan ini.</p>
+                    </div>`;
                 fbContainer.innerHTML = '';
                 return;
             }
             
-            const v = data[0]; // LogID, Bulan, UserID, HR, TR, HP, TP, Team, Kom, Init, Aktif, Total, Predikat
+            const v = data[0]; 
+            
+            // Tentukan warna badge berdasarkan predikat
+            let predClass = "bg-red-100 text-red-800";
+            if(v[12] === "Melebihi Harapan") predClass = "bg-green-100 text-green-800";
+            else if(v[12] === "Sesuai Harapan") predClass = "bg-blue-100 text-blue-800";
+            else if(v[12] === "Mendekati Harapan") predClass = "bg-yellow-100 text-yellow-800";
+            else if(v[12] === "Perlu Ditingkatkan" || v[12] === "Perlu Perlakuan Khusus") predClass = "bg-orange-100 text-orange-800";
+
             container.innerHTML = `
-                <p><strong>Total Nilai Akhir:</strong> <span style="font-size: 1.5rem; color: var(--primary); font-weight: bold;">${v[11]}</span></p>
-                <p><strong>Predikat Kualitatif:</strong> <span style="font-weight: 600;">${v[12]}</span></p>
-                <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border);">
-                
-                <div style="display:flex; gap: 2rem; flex-wrap: wrap;">
-                    <div>
-                        <h4>Kedisiplinan (Kuantitatif)</h4>
-                        <p>Hadir Rapat: <strong>${v[3]}</strong> | Telat: <strong>${v[4]}</strong></p>
-                        <p>Hadir Proker: <strong>${v[5]}</strong> | Telat: <strong>${v[6]}</strong></p>
+                <div class="flex flex-col md:flex-row items-center justify-between bg-slate-50 rounded-xl p-6 border border-slate-100 mb-6 gap-6">
+                    <div class="text-center md:text-left">
+                        <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Nilai Akhir</p>
+                        <div class="text-5xl font-black text-himpPrimary">${v[11]}</div>
                     </div>
-                    <div>
-                        <h4>Penilaian Performa (Kualitatif)</h4>
-                        <p>Teamwork: <strong>${v[7]}</strong> | Komunikasi: <strong>${v[8]}</strong></p>
-                        <p>Inisiatif: <strong>${v[9]}</strong> | Keaktifan: <strong>${v[10]}</strong></p>
+                    <div class="text-center md:text-right">
+                        <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Predikat Performa</p>
+                        <span class="px-4 py-1.5 rounded-full text-sm font-bold shadow-sm ${predClass}">${v[12]}</span>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Kuantitatif -->
+                    <div class="border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Kedisiplinan (Kuantitatif)</h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-600">Kehadiran Rapat Divisi</span>
+                                <span class="font-semibold text-slate-900">${v[3]} (Telat: ${v[4]})</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-slate-600">Kehadiran Proker</span>
+                                <span class="font-semibold text-slate-900">${v[5]} (Telat: ${v[6]})</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Kualitatif -->
+                    <div class="border border-slate-200 rounded-xl p-5 shadow-sm">
+                        <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 border-b border-slate-100 pb-2">Performa (Kualitatif)</h4>
+                        <div class="grid grid-cols-2 gap-y-3 gap-x-4">
+                            <div class="text-sm">
+                                <p class="text-slate-500 text-xs mb-0.5">Teamwork</p>
+                                <p class="font-semibold text-slate-900">${v[7]}</p>
+                            </div>
+                            <div class="text-sm">
+                                <p class="text-slate-500 text-xs mb-0.5">Komunikasi</p>
+                                <p class="font-semibold text-slate-900">${v[8]}</p>
+                            </div>
+                            <div class="text-sm">
+                                <p class="text-slate-500 text-xs mb-0.5">Inisiatif</p>
+                                <p class="font-semibold text-slate-900">${v[9]}</p>
+                            </div>
+                            <div class="text-sm">
+                                <p class="text-slate-500 text-xs mb-0.5">Keaktifan</p>
+                                <p class="font-semibold text-slate-900">${v[10]}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
 
             if (feedbackData && feedbackData[4]) {
-                fbContainer.innerHTML = `<h4>Catatan dari BPH:</h4><p style="margin-bottom:0; color:#b45309; font-style:italic;">"${feedbackData[4]}"</p>`;
+                fbContainer.innerHTML = `
+                    <div class="mt-6 bg-himpAccent/10 border border-himpAccent/30 rounded-xl p-5 shadow-sm">
+                        <div class="flex items-center gap-2 mb-2">
+                            <svg class="w-5 h-5 text-yellow-700" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                            <h4 class="text-sm font-bold text-yellow-800">Catatan BPH untuk Divisi Ini:</h4>
+                        </div>
+                        <p class="text-sm text-yellow-900 italic leading-relaxed">"${feedbackData[4]}"</p>
+                    </div>`;
             } else {
                 fbContainer.innerHTML = '';
             }
@@ -573,7 +646,7 @@
             const feedbackArea = document.getElementById('admin-feedback-section');
 
             if (!adminAllScores || adminAllScores.length <= 1) {
-                container.innerHTML = '<p>Belum ada data penilaian sama sekali.</p>';
+                container.innerHTML = '<p class="text-sm text-slate-500 py-4">Belum ada data penilaian sama sekali.</p>';
                 controlArea.innerHTML = '';
                 feedbackArea.classList.add('hidden');
                 return;
@@ -584,17 +657,17 @@
             if (selectedDivisi !== "Semua") {
                 filteredScores = filteredScores.filter(row => row[14] === selectedDivisi);
                 
-                // Cek status kuncian untuk Divisi ini
                 const configRow = (adminAllConfigs || []).find(r => r[1] === selectedBulan && r[2] === selectedDivisi);
                 const isLocked = configRow ? configRow[5] === true : false;
                 
+                const btnColor = isLocked ? "bg-red-600 hover:bg-red-700 text-white" : "bg-himpAccent hover:bg-yellow-500 text-slate-900";
+                
                 controlArea.innerHTML = `
-                    <button class="${isLocked ? 'btn-danger' : 'btn-warning'}" onclick="toggleLock('${selectedDivisi}', ${!isLocked})">
-                        ${isLocked ? 'Buka Kuncian Divisi' : 'Kunci Penilaian Divisi'}
+                    <button class="${btnColor} font-bold py-2.5 px-6 rounded-lg shadow-sm transition-all text-sm w-full md:w-auto" onclick="toggleLock('${selectedDivisi}', ${!isLocked})">
+                        ${isLocked ? 'Buka Kuncian (Unlock)' : 'Kunci Penilaian (Lock)'}
                     </button>
                 `;
 
-                // Set nilai feedback
                 const fbRow = (adminAllFeedbacks || []).find(r => r[1] === selectedBulan && r[2] === selectedDivisi);
                 document.getElementById('admin-feedback-text').value = fbRow ? fbRow[4] : '';
                 feedbackArea.classList.remove('hidden');
@@ -604,36 +677,39 @@
             }
 
             if (filteredScores.length === 0) {
-                container.innerHTML = `<p>Belum ada rekap data untuk filter ini.</p>`;
+                container.innerHTML = `<p class="text-sm text-slate-500 py-4 text-center">Belum ada rekap data untuk filter ini.</p>`;
                 return;
             }
 
-            let html = `<table>
-                <tr>
-                    <th>Divisi</th>
-                    <th>Nama Staf</th>
-                    <th>Nilai Akhir</th>
-                    <th>Predikat</th>
-                </tr>`;
+            let html = `<table class="w-full text-sm text-left">
+                <thead class="text-xs uppercase bg-slate-100 text-slate-600 border-b border-slate-200">
+                    <tr>
+                        <th class="px-4 py-3 font-semibold rounded-tl-lg">Divisi</th>
+                        <th class="px-4 py-3 font-semibold">Nama Staf</th>
+                        <th class="px-4 py-3 font-semibold text-center">Nilai Akhir</th>
+                        <th class="px-4 py-3 font-semibold rounded-tr-lg">Predikat</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">`;
             
             filteredScores.forEach(s => {
-                html += `<tr>
-                    <td><span class="badge" style="background:#e0e7ff; color:#3730a3;">${s[14] || '-'}</span></td>
-                    <td>${s[13] || s[2]}</td>
-                    <td><strong>${s[11]}</strong></td>
-                    <td>${s[12]}</td>
+                html += `<tr class="hover:bg-slate-50">
+                    <td class="px-4 py-3"><span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-xs font-semibold border border-blue-100">${s[14] || '-'}</span></td>
+                    <td class="px-4 py-3 font-medium text-slate-800">${s[13] || s[2]}</td>
+                    <td class="px-4 py-3 text-center font-bold text-himpPrimary text-base">${s[11]}</td>
+                    <td class="px-4 py-3 text-sm text-slate-600">${s[12]}</td>
                 </tr>`;
             });
-            html += '</table>';
+            html += '</tbody></table>';
             container.innerHTML = html;
         }
 
         async function toggleLock(divisi, lockStatus) {
             const bulan = document.getElementById('select-bulan').value;
             try {
-                const res = await fetchAPI('toggleLock', { bulan, divisi, isLocked: lockStatus });
+                const res = await fetchAPI('toggleLock', { bulan, divisi, isLocked: lockStatus, role: currentUser.role });
                 showToast(res.message, 'success');
-                loadDashboardData(); // Refresh UI
+                loadDashboardData();
             } catch (e) {}
         }
 
@@ -643,20 +719,36 @@
             const catatan = document.getElementById('admin-feedback-text').value;
 
             try {
-                const res = await fetchAPI('saveFeedback', { bulan, divisi, adminId: currentUser.userId, catatan });
+                const res = await fetchAPI('saveFeedbackBPH', { bulan, divisi, adminId: currentUser.userId, catatan });
                 showToast(res.message, 'success');
-                loadDashboardData(); // Refresh data
+                loadDashboardData();
             } catch(e) {}
         }
 
         function showToast(msg, type = 'success') {
             const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.className = type === 'success' ? 'toast-success' : 'toast-error';
-            toast.style.opacity = '1';
+            const toastMsg = document.getElementById('toast-msg');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            toastMsg.innerText = msg;
+            
+            if (type === 'success') {
+                toast.classList.replace('bg-slate-800', 'bg-green-800');
+                toastIcon.innerHTML = `<svg class="w-6 h-6 text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+            } else {
+                toast.classList.replace('bg-slate-800', 'bg-red-800');
+                toastIcon.innerHTML = `<svg class="w-6 h-6 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+            }
+            
+            toast.classList.add('toast-show');
             
             setTimeout(() => {
-                toast.style.opacity = '0';
+                toast.classList.remove('toast-show');
+                // Kembalikan ke warna dasar setelah hilang
+                setTimeout(() => {
+                    toast.classList.replace('bg-green-800', 'bg-slate-800');
+                    toast.classList.replace('bg-red-800', 'bg-slate-800');
+                }, 300);
             }, 3000);
         }
     </script>
