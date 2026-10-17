@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Penilaian Staf Himpunan</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .hidden { display: none !important; }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        h1, h2, h3, h4 { margin-bottom: 1rem; color: var(--text-main); }
+        p { margin-bottom: 1rem; color: var(--text-muted); }
+
+        .form-group { margin-bottom: 1rem; }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+        button:hover { background-color: var(--primary-hover); }
+        button:disabled { background-color: var(--text-muted); cursor: not-allowed; }
+
+        .btn-small { width: auto; padding: 0.5rem 1rem; font-size: 0.9rem; }
+        .btn-danger { background-color: var(--danger); }
+        .btn-danger:hover { background-color: #dc2626; }
+        .btn-warning { background-color: var(--warning); color: #fff;}
+        .btn-warning:hover { background-color: #d97706; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            overflow-x: auto;
+            display: block;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            min-width: 100px;
+        }
+        th { background-color: #f8fafc; font-weight: 600; font-size: 0.9rem; }
+        
+        .score-input { width: 70px; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; }
+        .disabled-input { background-color: #e5e7eb; cursor: not-allowed; }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--text-main);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        .toast-success { border-left: 5px solid var(--success); }
+        .toast-error { border-left: 5px solid var(--danger); }
+        
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-locked { background-color: #fee2e2; color: #991b1b; }
+        .badge-open { background-color: #d1fae5; color: #065f46; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="app">
+        <div id="login-view" class="card" style="max-width: 400px; margin: 5rem auto;">
+            <h2>Portal Penilaian Staf</h2>
+            <p>Silakan masuk menggunakan akun himpunan Anda.</p>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="username" placeholder="Masukkan username">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="Masukkan password">
+            </div>
+            <button id="btn-login" onclick="login()">Masuk</button>
+        </div>
+
+        <div id="dashboard-view" class="hidden">
+            <div class="header-bar">
+                <div>
+                    <h2 id="user-fullname">Nama Pengguna</h2>
+                    <p id="user-role-divisi">Role - Divisi</p>
+                </div>
+                <button class="btn-small btn-danger" onclick="logout()">Logout</button>
+            </div>
+
+            <div class="form-group" style="max-width: 300px; margin-bottom: 2rem;">
+                <label>Pilih Periode Bulan</label>
+                <select id="select-bulan" onchange="loadDashboardData()">
+                    <option value="September 2026">September 2026</option>
+                    <option value="Oktober 2026">Oktober 2026</option>
+                    <option value="November 2026">November 2026</option>
+                    <option value="Desember 2026">Desember 2026</option>
+                </select>
+            </div>
+
+            <div id="staf-content" class="hidden card">
+                <h3>Hasil Penilaian Anda</h3>
+                <div id="staf-scores-container">Memuat data...</div>
+                <div id="staf-feedback-container" style="margin-top: 2rem; padding: 1rem; background: #fffbeb; border-radius: 8px;"></div>
+            </div>
+
+            <div id="kadiv-content" class="hidden card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>Form Penilaian Staf Divisi</h3>
+                    <span id="lock-status-badge" class="badge badge-open">Status: Dibuka</span>
+                </div>
+                
+                <div class="card" style="background-color: #f8fafc; border: 1px solid var(--border); margin-top: 1rem;">
+                    <h4>Konfigurasi Kegiatan Divisi Bulan Ini</h4>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <div class="form-group">
+                            <label>Total Rapat Divisi</label>
+                            <input type="number" id="config-rapat" value="0" min="0" onchange="recalculateAll()">
+                        </div>
+                        <div class="form-group">
+                            <label>Total Proker Divisi</label>
+                            <input type="number" id="config-proker" value="0" min="0" onchange="recalculateAll()">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="kadiv-table-container">Memuat form penilaian...</div>
+                
+                <button onclick="saveKadivPenilaian()" id="btn-save-kadiv" style="margin-top: 2rem;">Simpan Penilaian</button>
+            </div>
+
+            <div id="admin-content" class="hidden card">
+                <h3>Rekapitulasi & Kendali BPH</h3>
+                
+                <div style="margin-bottom: 2rem;">
+                    <h4>Kontrol Divisi</h4>
+                    <div style="display:flex; gap: 1rem; align-items: flex-end;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Pilih Divisi</label>
+                            <select id="admin-select-divisi" onchange="filterAdminTable()">
+                                <option value="Semua">Semua Divisi</option>
+                                <option value="Medbrand">Medbrand</option>
+                                <option value="PSDM">PSDM</option>
+                                <option value="Humas">Humas</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 1;" id="admin-action-controls">
+                            <!-- Tombol Kunci/Buka akan muncul di sini jika satu divisi dipilih -->
+                        </div>
+                    </div>
+                </div>
+
+                <div id="admin-feedback-section" class="hidden" style="margin-bottom: 2rem; background: #f8fafc; padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
+                    <h4>Catatan / Feedback untuk Divisi</h4>
+                    <textarea id="admin-feedback-text" rows="3" placeholder="Masukkan catatan untuk divisi ini..."></textarea>
+                    <button class="btn-small" style="margin-top: 1rem;" onclick="saveAdminFeedback()">Kirim Feedback</button>
+                </div>
+
+                <div id="admin-table-container">Memuat data rekapitulasi...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast">Notifikasi</div>
+
+    <script>
+        // GANTI INI DENGAN URL WEB APP KAMU
+        const API_URL = 'https://script.google.com/macros/s/AKfycbwHD9tEhIk1agnwPyl430zRyEeS9rTFd_TcWYGT15JWMTc6jPiFqrmNISmXAobdvELl3A/exec';
+        
+        let currentUser = null;
+        let currentStaffList = [];
+        let isCurrentMonthLocked = false;
+        
+        // Data khusus Admin
+        let adminAllScores = [];
+        let adminAllConfigs = [];
+        let adminAllFeedbacks = [];
+
+        async function fetchAPI(action, payload) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action, payload })
+                });
+                const text = await response.text();
+                const json = JSON.parse(text);
+                
+                if (json.status === 'error') throw new Error(json.message);
+                return json.data;
+            } catch (error) {
+                showToast(error.message || 'Terjadi kesalahan jaringan.', 'error');
+                throw error;
+            }
+        }
+
+        async function login() {
+            const userIn = document.getElementById('username').value;
+            const passIn = document.getElementById('password').value;
+            const btn = document.getElementById('btn-login');
+
+            if (!userIn || !passIn) return showToast('Harap isi username dan password.', 'error');
+
+            btn.disabled = true;
+            btn.innerText = 'Memverifikasi...';
+
+            try {
+                const userData = await fetchAPI('login', { username: userIn, password: passIn });
+                currentUser = userData;
+                
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('dashboard-view').classList.remove('hidden');
+                
+                document.getElementById('user-fullname').innerText = currentUser.nama;
+                document.getElementById('user-role-divisi').innerText = `${currentUser.role} - ${currentUser.divisi}`;
+
+                loadDashboardData();
+            } catch (error) {
+                // error ditampilkan di toast oleh fetchAPI
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Masuk';
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+            
+            ['staf-content', 'kadiv-content', 'admin-content'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+        }
+
+        async function loadDashboardData() {
+            const bulan = document.getElementById('select-bulan').value;
+            
+            ['staf-content', 'kadiv-content', 'admin-content'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+
+            try {
+                const data = await fetchAPI('getDashboardData', {
+                    userId: currentUser.userId,
+                    role: currentUser.role,
+                    divisi: currentUser.divisi,
+                    bulan: bulan
+                });
+
+                if (currentUser.role === 'Staf') {
+                    document.getElementById('staf-content').classList.remove('hidden');
+                    renderStafScores(data.myScores, data.feedback);
+                } else if (currentUser.role === 'Kadiv') {
+                    document.getElementById('kadiv-content').classList.remove('hidden');
+                    renderKadivForm(data);
+                } else if (currentUser.role === 'Admin') {
+                    document.getElementById('admin-content').classList.remove('hidden');
+                    adminAllScores = data.allScores || [];
+                    adminAllConfigs = data.allConfigs || [];
+                    adminAllFeedbacks = data.allFeedback || [];
+                    filterAdminTable();
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function calculateGrades(hadirR, lateR, hadirP, lateP, team, kom, init, aktif) {
+            const totRapat = parseInt(document.getElementById('config-rapat').value) || 0;
+            const totProker = parseInt(document.getElementById('config-proker').value) || 0;
+
+            // Kuantitatif (Kedisiplinan) - Rapat 25%, Proker 35%
+            let skorRapat = 0;
+            let skorProker = 0;
+
+            if (totRapat > 0) skorRapat = ((hadirR / totRapat) * 25) - (lateR * 5);
+            if (totProker > 0) skorProker = ((hadirP / totProker) * 35) - (lateP * 10);
+            
+            let nilaiKuantitatif = skorRapat + skorProker;
+            if (nilaiKuantitatif < 0) nilaiKuantitatif = 0;
+
+            // Kualitatif - Masing-masing bobot 10% (Total 40%)
+            const nilaiKualitatif = (team * 0.1) + (kom * 0.1) + (init * 0.1) + (aktif * 0.1);
+            
+            // Penentuan Predikat berdasarkan rata-rata input (0-100)
+            const rataKualitatif = (Number(team) + Number(kom) + Number(init) + Number(aktif)) / 4;
+            let predikat = "Tidak Tertolong";
+            if (rataKualitatif >= 86) predikat = "Melebihi Harapan";
+            else if (rataKualitatif >= 71) predikat = "Sesuai Harapan";
+            else if (rataKualitatif >= 56) predikat = "Mendekati Harapan";
+            else if (rataKualitatif >= 41) predikat = "Perlu Ditingkatkan";
+            else if (rataKualitatif >= 26) predikat = "Perlu Perlakuan Khusus";
+
+            const totalAkhir = (nilaiKuantitatif + nilaiKualitatif).toFixed(2);
+            
+            return { totalAkhir, predikat };
+        }
+
+        function renderKadivForm(data) {
+            currentStaffList = data.staffList;
+            isCurrentMonthLocked = false;
+            
+            if (data.config) {
+                document.getElementById('config-rapat').value = data.config[3] || 0;
+                document.getElementById('config-proker').value = data.config[4] || 0;
+                isCurrentMonthLocked = data.config[5] === true;
+            } else {
+                document.getElementById('config-rapat').value = 0;
+                document.getElementById('config-proker').value = 0;
+            }
+
+            const badge = document.getElementById('lock-status-badge');
+            const btnSave = document.getElementById('btn-save-kadiv');
+            
+            if (isCurrentMonthLocked) {
+                badge.innerText = "Status: Dikunci BPH";
+                badge.className = "badge badge-locked";
+                btnSave.disabled = true;
+                btnSave.innerText = "Penilaian Dikunci";
+                document.getElementById('config-rapat').disabled = true;
+                document.getElementById('config-proker').disabled = true;
+            } else {
+                badge.innerText = "Status: Terbuka";
+                badge.className = "badge badge-open";
+                btnSave.disabled = false;
+                btnSave.innerText = "Simpan Penilaian";
+                document.getElementById('config-rapat').disabled = false;
+                document.getElementById('config-proker').disabled = false;
+            }
+
+            let html = `<table>
+                <tr>
+                    <th>Nama Staf</th>
+                    <th title="Hadir Rapat">H(R)</th>
+                    <th title="Telat Rapat">T(R)</th>
+                    <th title="Hadir Proker">H(P)</th>
+                    <th title="Telat Proker">T(P)</th>
+                    <th title="Teamwork">TW</th>
+                    <th title="Komunikasi">KOM</th>
+                    <th title="Inisiatif">INI</th>
+                    <th title="Keaktifan">AKT</th>
+                    <th>Total</th>
+                    <th>Predikat</th>
+                </tr>`;
+
+            currentStaffList.forEach(staf => {
+                const staffId = staf[0];
+                const nama = staf[3];
+                const existingScore = data.scoreList ? data.scoreList.find(row => row[2] === staffId) : null;
+                const v = existingScore || [0,0,0, 0,0,0,0, 0,0,0,0, "0.00", "-"];
+                const dsbl = isCurrentMonthLocked ? "disabled class='score-input disabled-input'" : "class='score-input calc-trigger'";
+
+                html += `
+                <tr id="row-${staffId}" data-nama="${nama}">
+                    <td style="font-size: 0.9rem;">${nama}</td>
+                    <td><input type="number" ${dsbl} id="hr-${staffId}" min="0" value="${v[3]}"></td>
+                    <td><input type="number" ${dsbl} id="tr-${staffId}" min="0" value="${v[4]}"></td>
+                    <td><input type="number" ${dsbl} id="hp-${staffId}" min="0" value="${v[5]}"></td>
+                    <td><input type="number" ${dsbl} id="tp-${staffId}" min="0" value="${v[6]}"></td>
+                    
+                    <td><input type="number" ${dsbl} id="team-${staffId}" min="0" max="100" value="${v[7]}"></td>
+                    <td><input type="number" ${dsbl} id="kom-${staffId}" min="0" max="100" value="${v[8]}"></td>
+                    <td><input type="number" ${dsbl} id="init-${staffId}" min="0" max="100" value="${v[9]}"></td>
+                    <td><input type="number" ${dsbl} id="aktif-${staffId}" min="0" max="100" value="${v[10]}"></td>
+                    
+                    <td><strong id="tot-${staffId}">${v[11] || 0}</strong></td>
+                    <td style="font-size: 0.85rem;"><span id="pred-${staffId}">${v[12] || "-"}</span></td>
+                </tr>`;
+            });
+            html += `</table>`;
+            document.getElementById('kadiv-table-container').innerHTML = html;
+
+            if (!isCurrentMonthLocked) {
+                document.querySelectorAll('.calc-trigger').forEach(input => {
+                    input.addEventListener('input', recalculateAll);
+                });
+                recalculateAll();
+            }
+        }
+
+        function recalculateAll() {
+            if(isCurrentMonthLocked) return;
+            currentStaffList.forEach(staf => {
+                const id = staf[0];
+                const hr = parseInt(document.getElementById(`hr-${id}`).value) || 0;
+                const tr = parseInt(document.getElementById(`tr-${id}`).value) || 0;
+                const hp = parseInt(document.getElementById(`hp-${id}`).value) || 0;
+                const tp = parseInt(document.getElementById(`tp-${id}`).value) || 0;
+                
+                const team = parseInt(document.getElementById(`team-${id}`).value) || 0;
+                const kom = parseInt(document.getElementById(`kom-${id}`).value) || 0;
+                const init = parseInt(document.getElementById(`init-${id}`).value) || 0;
+                const aktif = parseInt(document.getElementById(`aktif-${id}`).value) || 0;
+
+                const hasil = calculateGrades(hr, tr, hp, tp, team, kom, init, aktif);
+                
+                document.getElementById(`tot-${id}`).innerText = hasil.totalAkhir;
+                document.getElementById(`pred-${id}`).innerText = hasil.predikat;
+            });
+        }
+
+        async function saveKadivPenilaian() {
+            if(isCurrentMonthLocked) return;
+            
+            const btn = document.getElementById('btn-save-kadiv');
+            btn.disabled = true;
+            btn.innerText = 'Menyimpan...';
+            
+            const payload = {
+                bulan: document.getElementById('select-bulan').value,
+                divisi: currentUser.divisi,
+                totalRapat: parseInt(document.getElementById('config-rapat').value) || 0,
+                totalProker: parseInt(document.getElementById('config-proker').value) || 0,
+                scores: []
+            };
+
+            currentStaffList.forEach(staf => {
+                const id = staf[0];
+                const trElement = document.getElementById(`row-${id}`);
+                payload.scores.push({
+                    userId: id,
+                    namaStaf: trElement.dataset.nama,
+                    hadirRapat: parseInt(document.getElementById(`hr-${id}`).value) || 0,
+                    lateRapat: parseInt(document.getElementById(`tr-${id}`).value) || 0,
+                    hadirProker: parseInt(document.getElementById(`hp-${id}`).value) || 0,
+                    lateProker: parseInt(document.getElementById(`tp-${id}`).value) || 0,
+                    teamwork: parseInt(document.getElementById(`team-${id}`).value) || 0,
+                    komunikasi: parseInt(document.getElementById(`kom-${id}`).value) || 0,
+                    inisiatif: parseInt(document.getElementById(`init-${id}`).value) || 0,
+                    keaktifan: parseInt(document.getElementById(`aktif-${id}`).value) || 0,
+                    totalNilai: parseFloat(document.getElementById(`tot-${id}`).innerText) || 0,
+                    predikat: document.getElementById(`pred-${id}`).innerText
+                });
+            });
+
+            try {
+                const res = await fetchAPI('savePenilaian', payload);
+                showToast(res.message, 'success');
+            } catch (err) {
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Simpan Penilaian';
+            }
+        }
+
+        function renderStafScores(data, feedbackData) {
+            const container = document.getElementById('staf-scores-container');
+            const fbContainer = document.getElementById('staf-feedback-container');
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p>Belum ada nilai yang diinput oleh Kadiv untuk bulan ini.</p>';
+                fbContainer.innerHTML = '';
+                return;
+            }
+            
+            const v = data[0]; // LogID, Bulan, UserID, HR, TR, HP, TP, Team, Kom, Init, Aktif, Total, Predikat
+            container.innerHTML = `
+                <p><strong>Total Nilai Akhir:</strong> <span style="font-size: 1.5rem; color: var(--primary); font-weight: bold;">${v[11]}</span></p>
+                <p><strong>Predikat Kualitatif:</strong> <span style="font-weight: 600;">${v[12]}</span></p>
+                <hr style="margin: 1rem 0; border: none; border-top: 1px solid var(--border);">
+                
+                <div style="display:flex; gap: 2rem; flex-wrap: wrap;">
+                    <div>
+                        <h4>Kedisiplinan (Kuantitatif)</h4>
+                        <p>Hadir Rapat: <strong>${v[3]}</strong> | Telat: <strong>${v[4]}</strong></p>
+                        <p>Hadir Proker: <strong>${v[5]}</strong> | Telat: <strong>${v[6]}</strong></p>
+                    </div>
+                    <div>
+                        <h4>Penilaian Performa (Kualitatif)</h4>
+                        <p>Teamwork: <strong>${v[7]}</strong> | Komunikasi: <strong>${v[8]}</strong></p>
+                        <p>Inisiatif: <strong>${v[9]}</strong> | Keaktifan: <strong>${v[10]}</strong></p>
+                    </div>
+                </div>
+            `;
+
+            if (feedbackData && feedbackData[4]) {
+                fbContainer.innerHTML = `<h4>Catatan dari BPH:</h4><p style="margin-bottom:0; color:#b45309; font-style:italic;">"${feedbackData[4]}"</p>`;
+            } else {
+                fbContainer.innerHTML = '';
+            }
+        }
+
+        function filterAdminTable() {
+            const selectedBulan = document.getElementById('select-bulan').value;
+            const selectedDivisi = document.getElementById('admin-select-divisi').value;
+            const container = document.getElementById('admin-table-container');
+            const controlArea = document.getElementById('admin-action-controls');
+            const feedbackArea = document.getElementById('admin-feedback-section');
+
+            if (!adminAllScores || adminAllScores.length <= 1) {
+                container.innerHTML = '<p>Belum ada data penilaian sama sekali.</p>';
+                controlArea.innerHTML = '';
+                feedbackArea.classList.add('hidden');
+                return;
+            }
+
+            let filteredScores = adminAllScores.slice(1).filter(row => row[1] === selectedBulan);
+            
+            if (selectedDivisi !== "Semua") {
+                filteredScores = filteredScores.filter(row => row[14] === selectedDivisi);
+                
+                // Cek status kuncian untuk Divisi ini
+                const configRow = (adminAllConfigs || []).find(r => r[1] === selectedBulan && r[2] === selectedDivisi);
+                const isLocked = configRow ? configRow[5] === true : false;
+                
+                controlArea.innerHTML = `
+                    <button class="${isLocked ? 'btn-danger' : 'btn-warning'}" onclick="toggleLock('${selectedDivisi}', ${!isLocked})">
+                        ${isLocked ? 'Buka Kuncian Divisi' : 'Kunci Penilaian Divisi'}
+                    </button>
+                `;
+
+                // Set nilai feedback
+                const fbRow = (adminAllFeedbacks || []).find(r => r[1] === selectedBulan && r[2] === selectedDivisi);
+                document.getElementById('admin-feedback-text').value = fbRow ? fbRow[4] : '';
+                feedbackArea.classList.remove('hidden');
+            } else {
+                controlArea.innerHTML = '';
+                feedbackArea.classList.add('hidden');
+            }
+
+            if (filteredScores.length === 0) {
+                container.innerHTML = `<p>Belum ada rekap data untuk filter ini.</p>`;
+                return;
+            }
+
+            let html = `<table>
+                <tr>
+                    <th>Divisi</th>
+                    <th>Nama Staf</th>
+                    <th>Nilai Akhir</th>
+                    <th>Predikat</th>
+                </tr>`;
+            
+            filteredScores.forEach(s => {
+                html += `<tr>
+                    <td><span class="badge" style="background:#e0e7ff; color:#3730a3;">${s[14] || '-'}</span></td>
+                    <td>${s[13] || s[2]}</td>
+                    <td><strong>${s[11]}</strong></td>
+                    <td>${s[12]}</td>
+                </tr>`;
+            });
+            html += '</table>';
+            container.innerHTML = html;
+        }
+
+        async function toggleLock(divisi, lockStatus) {
+            const bulan = document.getElementById('select-bulan').value;
+            try {
+                const res = await fetchAPI('toggleLock', { bulan, divisi, isLocked: lockStatus });
+                showToast(res.message, 'success');
+                loadDashboardData(); // Refresh UI
+            } catch (e) {}
+        }
+
+        async function saveAdminFeedback() {
+            const bulan = document.getElementById('select-bulan').value;
+            const divisi = document.getElementById('admin-select-divisi').value;
+            const catatan = document.getElementById('admin-feedback-text').value;
+
+            try {
+                const res = await fetchAPI('saveFeedback', { bulan, divisi, adminId: currentUser.userId, catatan });
+                showToast(res.message, 'success');
+                loadDashboardData(); // Refresh data
+            } catch(e) {}
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.className = type === 'success' ? 'toast-success' : 'toast-error';
+            toast.style.opacity = '1';
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
